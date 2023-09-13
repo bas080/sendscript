@@ -1,0 +1,24 @@
+{
+  "name": "sendscript",
+  "version": "0.0.0",
+  "description": "Blur the line between server and client code.",
+  "module": true,
+  "main": "index.mjs",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:bas080/sendscript.git"
+  },
+  "scripts": {
+    "test": "tap *.test.mjs --no-cov",
+    "version": "npm run docs && git add *.md",
+    "docs": "markatzea README.mz | tee README.md"
+  },
+  "author": "Bas Huis",
+  "license": "MIT",
+  "devDependencies": {
+    "tap": "^16.3.4"
+  },
+  "dependencies": {
+    "debug": "^4.3.4"
+  }
+}
