@@ -28,6 +28,7 @@ We write a simple module that only has an add function
 // ./example/math.mjs
 
 export const add = (a, b) => a + b
+export const square = a => a * a
 ```
 
 ### Server
@@ -82,10 +83,10 @@ const exec = program => {
   })
 }
 
-const { add } = dsl(['add'], exec)
+const { add, square } = dsl(['add', 'square'], exec)
 
 console.log(
-  await add(1, add(add(2, 3), 4))
+  await square(add(1, add(add(2, 3), 4)))
 )
 
 process.exit(0)

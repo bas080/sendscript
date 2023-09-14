@@ -16,10 +16,10 @@ const exec = program => {
   })
 }
 
-const { add } = dsl(['add'], exec)
+const { add, square } = dsl(['add', 'square'], exec)
 
 console.log(
-  await add(1, add(add(2, 3), 4))
+  await square(add(1, add(add(2, 3), 4)))
 )
 
 process.exit(0)

@@ -3,8 +3,9 @@
 Write JS code that you can run on servers, browsers or other clients.
 
 [![NPM](https://img.shields.io/npm/v/sendscript?color=blue&style=flat-square)](https://www.npmjs.com/package/sendscript)
+[![100% Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square)](#tests)
 [![Standard Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square)](https://standardjs.com)
-[![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE)
+[![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
 
 > SendScript leaves it up to you to choose HTTP, web-sockets or any other method of
 > communication between servers and clients that best fits your needs.
@@ -27,6 +28,7 @@ We write a simple module that only has an add function
 // ./example/math.mjs
 
 export const add = (a, b) => a + b
+export const square = a => a * a
 ```
 
 ### Server
@@ -81,10 +83,10 @@ const exec = program => {
   })
 }
 
-const { add } = dsl(['add'], exec)
+const { add, square } = dsl(['add', 'square'], exec)
 
 console.log(
-  await add(1, add(add(2, 3), 4))
+  await square(add(1, add(add(2, 3), 4)))
 )
 
 process.exit(0)
@@ -102,7 +104,7 @@ node ./example/client.socket.io.mjs
 pkill sendscript
 ```
 ```
-10
+100
 ```
 
 ## Reference
@@ -181,7 +183,7 @@ dsl.test.mjs .......................................... 5/5
 exec.test.mjs ....................................... 15/15
 total ............................................... 24/24
 
-  24 passing (400.194ms)
+  24 passing (448.796ms)
 
   ok
 -----------|---------|----------|---------|---------|-------------------
