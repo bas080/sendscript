@@ -1,17 +1,8 @@
+import promiseOnly from './promise-only.mjs'
+
 const symbol = Symbol('dsl')
-
-// Only await values that are not part of the dsl.
-const promiseAllNonDSL = async values => values.reduce(async (_acc, value) => {
-  const acc = await _acc
-
-  if (value[symbol] === symbol) {
-    acc.push(value)
-  } else {
-    acc.push(await value)
-  }
-
-  return acc
-}, [])
+const isNonDSL = v => v?.[symbol] !== symbol
+const promiseOnlyNonDSL = promiseOnly(isNonDSL)
 
 export default function dsl (schema, call) {
   return schema.reduce((api, name) => {
@@ -24,7 +15,7 @@ export default function dsl (schema, call) {
 
       v[symbol] = symbol
       v.then = async (...thenArgs) => {
-        return then(await promiseAllNonDSL(v))(...thenArgs)
+        return then(await promiseOnlyNonDSL(v))(...thenArgs)
       }
       return v
     }
