@@ -1,10 +1,10 @@
 import promiseOnly from './promise-only.mjs'
 
-const symbol = Symbol('dsl')
-const isNonDSL = v => v?.[symbol] !== symbol
-const promiseOnlyNonDSL = promiseOnly(isNonDSL)
+const symbol = Symbol('api')
+const isNonAPI = v => v?.[symbol] !== symbol
+const promiseOnlyNonAPI = promiseOnly(isNonAPI)
 
-export default function dsl (schema, call) {
+export default function api (schema, call) {
   return schema.reduce((api, name) => {
     const then = (program) => (resolve, reject) =>
       Promise.resolve(call(program)).then(resolve, reject)
@@ -15,7 +15,7 @@ export default function dsl (schema, call) {
         return [fn, ...args]
       },
       async then (resolve, reject) {
-        return then(await promiseOnlyNonDSL([
+        return then(await promiseOnlyNonAPI([
           fn, ...args
         ]))(resolve, reject)
       }

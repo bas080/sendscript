@@ -69,7 +69,7 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import dsl from '../dsl.mjs'
+import api from '../api.mjs'
 
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
@@ -84,7 +84,7 @@ const exec = program => {
   })
 }
 
-const { add, square } = dsl(['add', 'square'], exec)
+const { add, square } = api(['add', 'square'], exec)
 
 console.log(
   await square(add(1, add(add(2, 3), 4)))
@@ -113,22 +113,22 @@ wire and execute it somewhere else.
 We only have two modules. One that helps you write programs that can be sent
 over the wire and another for running that program.
 
-### `sendscript/dsl.mjs`
+### `sendscript/api.mjs`
 
-The dsl module exports a function that takes two arguments.
+The api module exports a function that takes two arguments.
 
 1. The schema, which represents the values that are available.
 2. The function that will be called with the serializable version of the
    program.
 
 It returns an object that contains functions which are defined in the schema.
-These functions are a JavaScript DSL for writing programs that can be sent to
+These functions are a JavaScript API for writing programs that can be sent to
 a server.
 
 ```js
-import dsl from './dsl.mjs'
+import api from './api.mjs'
 
-const  { add, subtract } = dsl(
+const  { add, subtract } = api(
   ['add', 'subtract'],
   serializableProgram => sendSomewhereToBeExecuted(serializableProgram)
 )
@@ -144,7 +144,7 @@ soon as await or `.then` is used.
 > Notice that you do not have to await the subtract call. You only need to
 > await when you want to execute the program.
 
-This DSL is composable and wrappable.
+This API is composable and wrappable.
 
 ### `sendscript/exec.mjs`
 

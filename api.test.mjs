@@ -1,10 +1,10 @@
 import { test } from 'tap'
-import dsl from './dsl.mjs'
+import api from './api.mjs'
 
 test('return a constant value', async t => {
   t.plan(1)
 
-  const { constant } = dsl(['constant'], v => {
+  const { constant } = api(['constant'], v => {
     t.equal(JSON.stringify(v), '["ref","constant"]')
   })
 
@@ -14,7 +14,7 @@ test('return a constant value', async t => {
 test('use function calls as arguments', async t => {
   t.plan(4)
 
-  const { add } = dsl(['add'], b => {
+  const { add } = api(['add'], b => {
     t.equal(JSON.stringify(awaited), JSON.stringify(b))
     return 'done'
   })

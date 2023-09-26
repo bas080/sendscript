@@ -1,7 +1,7 @@
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import dsl from '../dsl.mjs'
+import api from '../api.mjs'
 
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
@@ -16,7 +16,7 @@ const exec = program => {
   })
 }
 
-const { add, square } = dsl(['add', 'square'], exec)
+const { add, square } = api(['add', 'square'], exec)
 
 console.log(
   await square(add(1, add(add(2, 3), 4)))
