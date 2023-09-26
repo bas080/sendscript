@@ -7,8 +7,9 @@ Write JS code that you can run on servers, browsers or other clients.
 [![Standard Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square)](https://standardjs.com)
 [![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
 
-> SendScript leaves it up to you to choose HTTP, web-sockets or any other method of
-> communication between servers and clients that best fits your needs.
+> SendScript leaves it up to you to choose HTTP, web-sockets or any other
+> method of communication between servers and clients that best fits your
+> needs.
 
 ## Socket example
 
@@ -22,7 +23,7 @@ npm install --no-save socket.io socket.io-client
 
 ### Module
 
-We write a simple module that only has an add function
+We write a simple module.
 
 ```js cat - > ./example/math.mjs
 // ./example/math.mjs
@@ -33,7 +34,7 @@ export const square = a => a * a
 
 ### Server
 
-Here a simple module for running a socket.io server that runs SendScript programs.
+Here a socket.io server that runs SendScript programs.
 
 ```js cat - > ./example/server.socket.io.mjs
 // ./example/server.socket.io.mjs
@@ -106,8 +107,8 @@ pkill sendscript
 
 ## Reference
 
-SendScript is essentially a way to serialize a program to then send over the wire
-and execute it somewhere else.
+SendScript is essentially a way to serialize a program to then send over the
+wire and execute it somewhere else.
 
 We only have two modules. One that helps you write programs that can be sent
 over the wire and another for running that program.
@@ -160,8 +161,8 @@ exec({
 
 The array you see here is the LISP that SendScript uses to represent programs.
 
-You could use SendScript without knowing the details of how the LISP works. It is an
-implementation detail and might change over time.
+You could use SendScript without knowing the details of how the LISP works. It
+is an implementation detail and might change over time.
 
 ## Tests
 
