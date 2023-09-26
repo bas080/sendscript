@@ -7,8 +7,9 @@ Write JS code that you can run on servers, browsers or other clients.
 [![Standard Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square)](https://standardjs.com)
 [![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
 
-> SendScript leaves it up to you to choose HTTP, web-sockets or any other method of
-> communication between servers and clients that best fits your needs.
+> SendScript leaves it up to you to choose HTTP, web-sockets or any other
+> method of communication between servers and clients that best fits your
+> needs.
 
 ## Socket example
 
@@ -22,7 +23,7 @@ npm install --no-save socket.io socket.io-client
 
 ### Module
 
-We write a simple module that only has an add function
+We write a simple module.
 
 ```js
 // ./example/math.mjs
@@ -33,7 +34,7 @@ export const square = a => a * a
 
 ### Server
 
-Here a simple module for running a socket.io server that runs SendScript programs.
+Here a socket.io server that runs SendScript programs.
 
 ```js
 // ./example/server.socket.io.mjs
@@ -68,7 +69,7 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import dsl from '../dsl.mjs'
+import api from '../api.mjs'
 
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
@@ -83,7 +84,7 @@ const exec = program => {
   })
 }
 
-const { add, square } = dsl(['add', 'square'], exec)
+const { add, square } = api(['add', 'square'], exec)
 
 console.log(
   await square(add(1, add(add(2, 3), 4)))
@@ -109,28 +110,28 @@ pkill sendscript
 
 ## Reference
 
-SendScript is essentially a way to serialize a program to then send over the wire
-and execute it somewhere else.
+SendScript is essentially a way to serialize a program to then send over the
+wire and execute it somewhere else.
 
 We only have two modules. One that helps you write programs that can be sent
 over the wire and another for running that program.
 
-### `sendscript/dsl.mjs`
+### `sendscript/api.mjs`
 
-The dsl module exports a function that takes two arguments.
+The api module exports a function that takes two arguments.
 
 1. The schema, which represents the values that are available.
 2. The function that will be called with the serializable version of the
    program.
 
 It returns an object that contains functions which are defined in the schema.
-These functions are a JavaScript DSL for writing programs that can be sent to
+These functions are a JavaScript API for writing programs that can be sent to
 a server.
 
 ```js
-import dsl from './dsl.mjs'
+import api from './api.mjs'
 
-const  { add, subtract } = dsl(
+const  { add, subtract } = api(
   ['add', 'subtract'],
   serializableProgram => sendSomewhereToBeExecuted(serializableProgram)
 )
@@ -146,7 +147,7 @@ soon as await or `.then` is used.
 > Notice that you do not have to await the subtract call. You only need to
 > await when you want to execute the program.
 
-This DSL is composable and wrappable.
+This API is composable and wrappable.
 
 ### `sendscript/exec.mjs`
 
@@ -163,8 +164,8 @@ exec({
 
 The array you see here is the LISP that SendScript uses to represent programs.
 
-You could use SendScript without knowing the details of how the LISP works. It is an
-implementation detail and might change over time.
+You could use SendScript without knowing the details of how the LISP works. It
+is an implementation detail and might change over time.
 
 ## Tests
 
@@ -175,27 +176,28 @@ npx c8 --100 npm t -- -R classic
 ```
 ```
 
-> sendscript@0.0.0 test
+> sendscript@0.0.1 test
 > tap *.test.mjs --no-cov -R classic
 
+api.test.mjs .......................................... 5/5
 curry.test.mjs ........................................ 4/4
-dsl.test.mjs .......................................... 5/5
-exec.test.mjs ....................................... 15/15
-total ............................................... 24/24
+exec.test.mjs ....................................... 16/16
+total ............................................... 25/25
 
-  24 passing (448.796ms)
+  25 passing (406.01ms)
 
   ok
------------|---------|----------|---------|---------|-------------------
-File       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
------------|---------|----------|---------|---------|-------------------
-All files  |     100 |      100 |     100 |     100 |                   
- curry.mjs |     100 |      100 |     100 |     100 |                   
- debug.mjs |     100 |      100 |     100 |     100 |                   
- dsl.mjs   |     100 |      100 |     100 |     100 |                   
- error.mjs |     100 |      100 |     100 |     100 |                   
- exec.mjs  |     100 |      100 |     100 |     100 |                   
------------|---------|----------|---------|---------|-------------------
+------------------|---------|----------|---------|---------|-------------------
+File              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+------------------|---------|----------|---------|---------|-------------------
+All files         |     100 |      100 |     100 |     100 |                   
+ api.mjs          |     100 |      100 |     100 |     100 |                   
+ curry.mjs        |     100 |      100 |     100 |     100 |                   
+ debug.mjs        |     100 |      100 |     100 |     100 |                   
+ error.mjs        |     100 |      100 |     100 |     100 |                   
+ exec.mjs         |     100 |      100 |     100 |     100 |                   
+ promise-only.mjs |     100 |      100 |     100 |     100 |                   
+------------------|---------|----------|---------|---------|-------------------
 ```
 
 ## Formatting
