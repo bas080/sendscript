@@ -108,3 +108,18 @@ test('should reject with the error of the called function', async t => {
 
   t.end()
 })
+
+test('should not exec expressions in an object', async t => {
+  const env = {
+    throws () {
+      throw new Error('Should not have been called.')
+    }
+  }
+
+  const result = await exec(env, { quoted: ['throws'] })
+
+  t.same(result, {
+    quoted: ['throws']
+  })
+  t.end()
+})
