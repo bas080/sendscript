@@ -11,6 +11,8 @@ Write JS code that you can run on servers, browsers or other clients.
 > method of communication between servers and clients that best fits your
 > needs.
 
+<!-- toc -->
+
 ## Socket example
 
 For this example we'll use [socket.io][socket.io].
