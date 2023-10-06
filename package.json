@@ -4,6 +4,13 @@
   "description": "Blur the line between server and client code.",
   "module": true,
   "main": "index.mjs",
+  "keywords": [
+    "rpc",
+    "json",
+    "dsl",
+    "lisp",
+    "program"
+  ],
   "repository": {
     "type": "git",
     "url": "git@github.com:bas080/sendscript.git"
