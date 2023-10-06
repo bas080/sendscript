@@ -11,6 +11,22 @@ Write JS code that you can run on servers, browsers or other clients.
 > method of communication between servers and clients that best fits your
 > needs.
 
+<!-- toc -->
+
+- [Socket example](#socket-example)
+  * [Module](#module)
+  * [Server](#server)
+  * [Client](#client)
+- [Reference](#reference)
+  * [`sendscript/api.mjs`](#sendscriptapimjs)
+  * [`sendscript/exec.mjs`](#sendscriptexecmjs)
+- [Tests](#tests)
+- [Formatting](#formatting)
+- [Changelog](#changelog)
+- [License](#license)
+
+<!-- tocstop -->
+
 ## Socket example
 
 For this example we'll use [socket.io][socket.io].
@@ -176,7 +192,7 @@ npx c8 --100 npm t -- -R classic
 ```
 ```
 
-> sendscript@0.0.1 test
+> sendscript@0.0.2 test
 > tap *.test.mjs --no-cov -R classic
 
 api.test.mjs .......................................... 5/5
@@ -184,7 +200,7 @@ curry.test.mjs ........................................ 4/4
 exec.test.mjs ....................................... 16/16
 total ............................................... 25/25
 
-  25 passing (406.01ms)
+  25 passing (426.12ms)
 
   ok
 ------------------|---------|----------|---------|---------|-------------------
