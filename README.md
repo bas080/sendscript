@@ -23,6 +23,7 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Tests](#tests)
 - [Formatting](#formatting)
 - [Changelog](#changelog)
+- [Dependencies](#dependencies)
 - [License](#license)
 
 <!-- tocstop -->
@@ -188,32 +189,25 @@ is an implementation detail and might change over time.
 Tests with 100% code coverage.
 
 ```bash
-npx c8 --100 npm t -- -R classic
+npm t -- -R silent
+npm t -- report text-summary
 ```
 ```
 
-> sendscript@0.0.2 test
-> tap *.test.mjs --no-cov -R classic
+> sendscript@0.0.3 test
+> tap -R silent
 
-api.test.mjs .......................................... 5/5
-curry.test.mjs ........................................ 4/4
-exec.test.mjs ....................................... 16/16
-total ............................................... 25/25
 
-  25 passing (426.12ms)
+> sendscript@0.0.3 test
+> tap report text-summary
 
-  ok
-------------------|---------|----------|---------|---------|-------------------
-File              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
-------------------|---------|----------|---------|---------|-------------------
-All files         |     100 |      100 |     100 |     100 |                   
- api.mjs          |     100 |      100 |     100 |     100 |                   
- curry.mjs        |     100 |      100 |     100 |     100 |                   
- debug.mjs        |     100 |      100 |     100 |     100 |                   
- error.mjs        |     100 |      100 |     100 |     100 |                   
- exec.mjs         |     100 |      100 |     100 |     100 |                   
- promise-only.mjs |     100 |      100 |     100 |     100 |                   
-------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 139/139 )
+Branches     : 100% ( 47/47 )
+Functions    : 100% ( 12/12 )
+Lines        : 100% ( 139/139 )
+================================================================================
 ```
 
 ## Formatting
@@ -231,6 +225,17 @@ The [changelog][changelog] is generated using the useful
 
 ```bash
 npx auto-changelog -p
+```
+
+## Dependencies
+
+Check if packages are up to date on release.
+
+```bash
+npm outdated && echo 'No outdated packages found'
+```
+```
+No outdated packages found
 ```
 
 ## License
