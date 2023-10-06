@@ -9,14 +9,14 @@
     "url": "git@github.com:bas080/sendscript.git"
   },
   "scripts": {
-    "test": "tap *.test.mjs --no-cov",
+    "test": "tap",
     "version": "npm run docs && git add *.md",
     "docs": "markatzea README.mz | tee README.md && npx markdown-toc -i README.md"
   },
   "author": "Bas Huis",
   "license": "MIT",
   "devDependencies": {
-    "tap": "^16.3.4"
+    "tap": "^18.4.3"
   },
   "dependencies": {
     "debug": "^4.3.4"

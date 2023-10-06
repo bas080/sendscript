@@ -171,7 +171,8 @@ is an implementation detail and might change over time.
 Tests with 100% code coverage.
 
 ```bash bash
-npx c8 --100 npm t -- -R classic
+npm t -- -R silent
+npm t -- report text-summary
 ```
 
 ## Formatting
@@ -189,6 +190,14 @@ The [changelog][changelog] is generated using the useful
 
 ```bash bash > /dev/null
 npx auto-changelog -p
+```
+
+## Dependencies
+
+Check if packages are up to date on release.
+
+```bash bash
+npm outdated && echo 'No outdated packages found'
 ```
 
 ## License
