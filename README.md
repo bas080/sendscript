@@ -194,11 +194,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@0.0.4 test
+> sendscript@0.1.0 test
 > tap -R silent
 
 
-> sendscript@0.0.4 test
+> sendscript@0.1.0 test
 > tap report text-summary
 
 
