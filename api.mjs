@@ -9,17 +9,17 @@ export default function api (schema, call) {
     const then = (program) => (resolve, reject) =>
       Promise.resolve(call(program)).then(resolve, reject)
 
-    const fn = (...args) => ({
-      [symbol]: symbol,
-      toJSON () {
-        return [fn, ...args]
-      },
-      async then (resolve, reject) {
-        return then(await promiseOnlyNonAPI([
-          fn, ...args
-        ]))(resolve, reject)
+    const fn = (...args) => {
+      const toJSON = () => ['call', fn, ...args]
+
+      return {
+        [symbol]: symbol,
+        toJSON,
+        async then (resolve, reject) {
+          return then(await promiseOnlyNonAPI(toJSON()))(resolve, reject)
+        }
       }
-    })
+    }
 
     fn.toJSON = () => ['ref', name]
     fn.then = then(fn)
