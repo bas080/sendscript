@@ -1,6 +1,6 @@
 import curry from './curry.mjs'
 
-const promiseOnly = curry(function promiseOnly (when, array) {
+export default curry(function awaitWhen (when, array) {
   return array.reduce(async (asyncAcc, item) => {
     const acc = await asyncAcc
 
@@ -9,5 +9,3 @@ const promiseOnly = curry(function promiseOnly (when, array) {
     return acc
   }, [])
 })
-
-export default promiseOnly
