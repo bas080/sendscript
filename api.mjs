@@ -1,9 +1,18 @@
-import promiseOnly from './promise-only.mjs'
+import awaitWhen from './await-when.mjs'
 
 const symbol = Symbol('api')
-const isNonAPI = v => v?.[symbol] !== symbol
-const promiseOnlyNonAPI = promiseOnly(isNonAPI)
+const isNotStub = v => v?.[symbol] !== symbol
+const awaitWhenNotStub = awaitWhen(isNotStub)
 
+
+/**
+ * Create stubs to be used to build the program.
+ *
+ * @param {string[]} schema - Names of stubs.
+ * @param {Function} call - Function to call when awaited.
+ *
+ * @return {Object} An object containing the named stubs.
+ */
 export default function api (schema, call) {
   return schema.reduce((api, name) => {
     const then = (program) => (resolve, reject) =>
@@ -16,7 +25,7 @@ export default function api (schema, call) {
         [symbol]: symbol,
         toJSON,
         async then (resolve, reject) {
-          return then(await promiseOnlyNonAPI(toJSON()))(resolve, reject)
+          return then(await awaitWhenNotStub(toJSON()))(resolve, reject)
         }
       }
     }
