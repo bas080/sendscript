@@ -19,6 +19,11 @@ test('should evaluate basic expressions correctly', async (t) => {
   )
 
   t.strictSame(
+    await evaluate([]),
+    []
+  )
+
+  t.strictSame(
     await evaluate(concat([1, 2], [[add(1, 2)]])),
     [1, 2, [3]]
   )
