@@ -18,7 +18,7 @@ export default function api (schema, call) {
       Promise.resolve(call(program)).then(resolve, reject)
 
     const fn = (...args) => {
-      const toJSON = () => ['call', fn, ...args]
+      const toJSON = () => ['call', fn, args]
 
       return {
         [symbol]: symbol,

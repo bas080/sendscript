@@ -13,9 +13,9 @@ const exec = curry(async (env, expression) => {
   const [operator, ...args] = expression
 
   if (operator === 'call') {
-    const [fnName, ...fnArgs] = args
+    const [fnRef, fnArgs] = args
 
-    const fn = await exec(env, fnName)
+    const fn = await exec(env, fnRef)
     return fn.apply(env, await exec(env, fnArgs))
   }
 
