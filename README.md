@@ -16,11 +16,11 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Reference](#reference)
   * [`sendscript/api.mjs`](#sendscriptapimjs)
   * [`sendscript/exec.mjs`](#sendscriptexecmjs)
+- [TypeScript](#typescript)
 - [Tests](#tests)
 - [Formatting](#formatting)
 - [Changelog](#changelog)
 - [Dependencies](#dependencies)
-- [License](#license)
 
 <!-- tocstop -->
 
@@ -184,6 +184,44 @@ The array you see here is the LISP that SendScript uses to represent programs.
 You could use SendScript without knowing the details of how the LISP works. It
 is an implementation detail and might change over time.
 
+## TypeScript
+
+There is a good use-case to write an environment module in TypeScript.
+
+1. Obviously the module would have the benefits that TypeScript offers when
+   coding.
+2. You can use tools like [typedoc][typedoc] to generate docs from your types to
+   share with consumers of your API.
+3. You can generate a .d.ts with `tsc --declaration` and use it to coerce your
+   client to adopt the modules type.
+
+```bash
+# Create pretty docs for your module.
+npx typedoc my-module.ts
+
+# Create the .d.ts file for your module.
+tsc --declaration
+```
+
+Now we can use the `my-module.d.ts` file for the client API.
+
+```ts
+import type * as MyModule from './my-module.d.ts'
+
+import sendScriptApi from 'sendscript/api.mjs'
+
+export default sendScriptApi([
+  fnOne,
+  fnTwo,
+], /* perform websocket request */) as typeof MyModule
+```
+
+> [!NOTE]
+> Although type coercion on the client side can improve the development
+> experience, it does not represent the actual type.
+> Values are likely subject to serialization and deserialization,
+> particularly when interfacing with JSON formats.
+
 ## Tests
 
 Tests with 100% code coverage.
@@ -194,19 +232,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@0.1.0 test
+> sendscript@0.1.1 test
 > tap -R silent
 
 
-> sendscript@0.1.0 test
+> sendscript@0.1.1 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 92/92 )
+Statements   : 100% ( 98/98 )
 Branches     : 100% ( 30/30 )
 Functions    : 100% ( 10/10 )
-Lines        : 100% ( 92/92 )
+Lines        : 100% ( 98/98 )
 ================================================================================
 ```
 
@@ -235,14 +273,6 @@ Check if packages are up to date on release.
 npm outdated && echo 'No outdated packages found'
 ```
 ```
-No outdated packages found
+Package  Current  Wanted  Latest  Location          Depended by
+tap       18.5.2  18.6.1  18.6.1  node_modules/tap  sendscript
 ```
-
-## License
-
-See the [LICENSE.txt][license] file for details.
-
-[license]:./LICENSE.txt
-[socket.io]:https://socket.io/
-[changelog]:./CHANGELOG.md
-[auto-changelog]:https://www.npmjs.com/package/auto-changelog
