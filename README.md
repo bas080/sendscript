@@ -21,6 +21,7 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Formatting](#formatting)
 - [Changelog](#changelog)
 - [Dependencies](#dependencies)
+- [License](#license)
 
 <!-- tocstop -->
 
@@ -232,11 +233,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@0.1.1 test
+> sendscript@0.1.2 test
 > tap -R silent
 
 
-> sendscript@0.1.1 test
+> sendscript@0.1.2 test
 > tap report text-summary
 
 
@@ -273,6 +274,15 @@ Check if packages are up to date on release.
 npm outdated && echo 'No outdated packages found'
 ```
 ```
-Package  Current  Wanted  Latest  Location          Depended by
-tap       18.5.2  18.6.1  18.6.1  node_modules/tap  sendscript
+No outdated packages found
 ```
+
+## License
+
+See the [LICENSE.txt][license] file for details.
+
+[license]:./LICENSE.txt
+[socket.io]:https://socket.io/
+[changelog]:./CHANGELOG.md
+[auto-changelog]:https://www.npmjs.com/package/auto-changelog
+[typedoc]:https://github.com/TypeStrong/typedoc
