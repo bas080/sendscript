@@ -174,21 +174,18 @@ There is a good use-case to write an environment module in TypeScript.
    coding.
 2. You can use tools like [typedoc][typedoc] to generate docs from your types to
    share with consumers of your API.
-3. You can generate a .d.ts with `tsc --declaration` and use it to coerce your
-   client to adopt the modules type.
+3. You can use the types of the module to coerce your client to adopt the
+   modules type.
 
 ```bash
 # Create pretty docs for your module.
 npx typedoc my-module.ts
-
-# Create the .d.ts file for your module.
-tsc --declaration
 ```
 
-Now we can use the `my-module.d.ts` file for the client API.
+Now we can use the `my-module.ts` file for the client API.
 
 ```ts
-import type * as MyModule from './my-module.d.ts'
+import type * as MyModule from './my-module'
 
 import sendScriptApi from 'sendscript/api.mjs'
 
