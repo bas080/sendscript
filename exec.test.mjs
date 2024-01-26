@@ -38,5 +38,9 @@ test('should evaluate basic expressions correctly', async (t) => {
     [1, 2, 3]
   )
 
+  t.rejects(async () => {
+    await evaluate(['ref', 'doesNotExist'])
+  })
+
   t.end()
 })

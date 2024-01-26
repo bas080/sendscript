@@ -3,6 +3,9 @@ import curry from './curry.mjs'
 
 const debug = _debug.extend('lisp')
 
+class SendScriptError extends Error {};
+class RefError extends SendScriptError {};
+
 const exec = curry(async (env, expression) => {
   debug('exec', expression)
 
@@ -22,10 +25,19 @@ const exec = curry(async (env, expression) => {
   if (operator === 'ref') {
     const [name] = args
 
+    if (!env.hasOwnProperty(name)) {
+      throw new RefError(expression)
+    }
+
     return env[name]
   }
 
   return await Promise.all(expression.map(exec(env)))
 })
+
+export {
+  SendScriptError,
+  RefError
+}
 
 export default exec
