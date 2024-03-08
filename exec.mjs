@@ -25,7 +25,7 @@ const exec = curry(async (env, expression) => {
   if (operator === 'ref') {
     const [name] = args
 
-    if (!env.hasOwnProperty(name)) {
+    if (!Object.hasOwn(env, name)) {
       throw new RefError(expression)
     }
 
