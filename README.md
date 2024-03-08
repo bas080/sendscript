@@ -230,19 +230,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@0.1.3 test
+> sendscript@0.1.4 test
 > tap -R silent
 
 
-> sendscript@0.1.3 test
+> sendscript@0.1.4 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 98/98 )
-Branches     : 100% ( 30/30 )
+Statements   : 100% ( 110/110 )
+Branches     : 100% ( 32/32 )
 Functions    : 100% ( 10/10 )
-Lines        : 100% ( 98/98 )
+Lines        : 100% ( 110/110 )
 ================================================================================
 ```
 
