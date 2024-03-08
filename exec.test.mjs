@@ -6,11 +6,13 @@ test('should evaluate basic expressions correctly', async (t) => {
   const module = {
     add: (a, b) => a + b,
     identity: x => x,
-    concat: (a, b) => a.concat(b)
+    concat: (a, b) => a.concat(b),
+    always: x => () => x,
+    multiply3: a => b => c => a * b * c
   }
 
   const evaluate = exec(module)
-  const { add, concat, identity } = api(Object.keys(module), program =>
+  const { add, concat, identity, always, multiply3 } = api(Object.keys(module), program =>
     evaluate(JSON.parse(JSON.stringify(program))))
 
   t.equal(
@@ -36,6 +38,17 @@ test('should evaluate basic expressions correctly', async (t) => {
   t.strictSame(
     await evaluate([identity(1), 2, 3]),
     [1, 2, 3]
+  )
+
+  // Function that returns a function.
+  t.strictSame(
+    await evaluate(always('hello')()),
+    'hello'
+  )
+
+  t.strictSame(
+    await evaluate(multiply3(1)(2)(3)),
+    6
   )
 
   t.rejects(async () => {

@@ -17,23 +17,26 @@ export default function api (schema, call) {
     const then = (program) => (resolve, reject) =>
       Promise.resolve(call(program)).then(resolve, reject)
 
-    const fn = (...args) => {
-      const toJSON = () => ['call', fn, args]
+    const fn = (called, ...args) => {
+      const toJSON = () => ['call', called, args]
 
-      return {
+      const fnInner = (...args) =>
+        fn(fnInner, ...args)
+
+      return Object.assign(fnInner, {
         [symbol]: symbol,
         toJSON,
         async then (resolve, reject) {
           return then(await awaitWhenNotStub(toJSON()))(resolve, reject)
         }
-      }
+      })
     }
 
     fn.toJSON = () => ['ref', name]
-    fn.then = then(fn)
+    fn.then = then(fn.bind(null, fn))
     fn[symbol] = symbol
 
-    api[name] = fn
+    api[name] = fn.bind(null, fn)
 
     return api
   }, {})
