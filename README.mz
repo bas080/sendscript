@@ -239,6 +239,11 @@ npm outdated && echo 'No outdated packages found'
 
 See the [LICENSE.txt][license] file for details.
 
+## Roadmap
+
+- [ ] Support lambdas for users to defined callbacks.
+- [ ] Support promises by not awaiting/resolving unless explicitly defined.
+
 [license]:./LICENSE.txt
 [socket.io]:https://socket.io/
 [changelog]:./CHANGELOG.md

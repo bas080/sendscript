@@ -1,8 +1,11 @@
-import awaitWhen from './await-when.mjs'
+import _debug from './debug.mjs'
+import isNil from './is-nil.mjs'
 
-const symbol = Symbol('api')
-const isNotStub = v => v?.[symbol] !== symbol
-const awaitWhenNotStub = awaitWhen(isNotStub)
+const debug = _debug.extend('replacer')
+
+const ref = Symbol('ref')
+const call = Symbol('call')
+const awaitSymbol = Symbol('await')
 
 /**
  * Create stubs to be used to build the program.
@@ -12,32 +15,98 @@ const awaitWhenNotStub = awaitWhen(isNotStub)
  *
  * @return {Object} An object containing the named stubs.
  */
-export default function api (schema, call) {
+export default function api (schema, sendFn) {
   return schema.reduce((api, name) => {
-    const then = (program) => (resolve, reject) =>
-      Promise.resolve(call(program)).then(resolve, reject)
+    const fn = (ref, ...args) => {
+      const returned = (...args) =>
+        fn(() => returned, ...args)
 
-    const fn = (called, ...args) => {
-      const toJSON = () => ['call', called, args]
-
-      const fnInner = (...args) =>
-        fn(fnInner, ...args)
-
-      return Object.assign(fnInner, {
-        [symbol]: symbol,
-        toJSON,
-        async then (resolve, reject) {
-          return then(await awaitWhenNotStub(toJSON()))(resolve, reject)
-        }
+      returned.toJSON = () => ({
+        [call]: call,
+        ref: ref(),
+        args
       })
+
+      returned.then = (resolve) => resolve(send(sendFn, {
+        [awaitSymbol]: awaitSymbol,
+        ref: returned
+      }))
+
+      return returned
     }
 
-    fn.toJSON = () => ['ref', name]
-    fn.then = then(fn.bind(null, fn))
-    fn[symbol] = symbol
+    const bound = fn.bind(null, () => bound)
 
-    api[name] = fn.bind(null, fn)
+    bound.toJSON = () => ({ [ref]: ref, name })
+    bound.then = (resolve) => resolve(send(sendFn, {
+      [awaitSymbol]: awaitSymbol,
+      ref: bound
+    }))
+
+    api[name] = bound
 
     return api
   }, {})
+}
+
+const send = (sendFn, program) => {
+  return sendFn(JSON.stringify(program, replacer))
+}
+
+const replaced = Symbol('api')
+
+const keywords = [
+  'ref',
+  'call',
+  'quote',
+  'await'
+]
+
+const isKeyword = v => keywords.includes(v)
+
+function replacer (key, value) {
+  debug(key, value)
+
+  if (isNil(value)) {
+    return value
+  }
+
+  if (value[ref]) {
+    const result = ['ref', value.name]
+
+    result[replaced] = replaced
+
+    return result
+  }
+
+  if (value[call]) {
+    const result = ['call', value.ref, value.args]
+
+    result[replaced] = replaced
+
+    return result
+  }
+
+  if (value[awaitSymbol]) {
+    const result = ['await', value.ref]
+
+    result[replaced] = replaced
+
+    return result
+  }
+
+  // Quote only the reserved string and not the complete array. Quoted values
+  // will be unquoted on parse. A quoted quote also.
+  if (!value[replaced] && Array.isArray(value)) {
+    const [operator, ...rest] = value
+
+    if (isKeyword(operator)) {
+      const quoted = ['quote', operator]
+      quoted[replaced] = replaced
+
+      return [quoted, ...rest]
+    }
+  }
+
+  return value
 }

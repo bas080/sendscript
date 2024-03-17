@@ -1,7 +1,8 @@
 import _debug from './debug.mjs'
 import curry from './curry.mjs'
+import isNil from './is-nil.mjs'
 
-const debug = _debug.extend('lisp')
+const debug = _debug.extend('reviver')
 
 class SendScriptError extends Error {};
 class RefError extends SendScriptError {};
@@ -9,31 +10,57 @@ class RefError extends SendScriptError {};
 const exec = curry(async (env, expression) => {
   debug('exec', expression)
 
-  if (!Array.isArray(expression)) {
-    return expression
+  return JSON.parse(expression, reviver(env))
+})
+
+const reviver = env => async (key, value) => {
+  debug(key, await (Array.isArray(await value) ? Promise.all(value) : value))
+
+  if (isNil(value)) return value
+
+  // Await all values for all objects properties
+  if (!Array.isArray(value)) {
+    if (typeof value !== 'object') return value
+
+    const keys = Object.keys(value)
+
+    return keys.reduce(async (_, key) => {
+      value[key] = await value[key]
+
+      return value
+    }, value)
   }
 
-  const [operator, ...args] = expression
+  const [operator, ...rest] = await Promise.all(value)
+
+  if (operator === 'await') {
+    const [awaited] = rest
+
+    return await awaited
+  }
+
+  if (Array.isArray(operator) && operator[0] === 'quote') {
+    const [, quoted] = operator
+
+    return [quoted, ...rest]
+  }
 
   if (operator === 'call') {
-    const [fnRef, fnArgs] = args
+    const [fn, args] = rest
 
-    const fn = await exec(env, fnRef)
-    return fn.apply(env, await exec(env, fnArgs))
+    return fn(...args)
   }
 
   if (operator === 'ref') {
-    const [name] = args
+    const [name] = rest
 
-    if (!Object.hasOwn(env, name)) {
-      throw new RefError(expression)
-    }
+    if (Object.hasOwn(env, name)) return env[name]
 
-    return env[name]
+    throw new RefError({ key, value })
   }
 
-  return await Promise.all(expression.map(exec(env)))
-})
+  return Promise.all(value)
+}
 
 export {
   SendScriptError,
