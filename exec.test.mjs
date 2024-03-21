@@ -11,15 +11,31 @@ const module = {
   multiply3: a => b => c => a * b * c,
   map: fn => array => array.map(fn),
   filter: pred => array => array.filter(pred),
-  hello: 'world'
+  hello: 'world',
+  resolve: x => Promise.resolve(x),
+  asyncFn: async () => 'my-async-function',
+  instanceOf: (x, t) => x instanceof t,
+  Function,
+  Promise,
 }
 
 test('should evaluate basic expressions correctly', async (t) => {
   const evaluate = exec(module)
-  const { hello, map, toArray, add, concat, identity, always, multiply3 } = api(
+  const { resolve, Function, Promise, instanceOf, promise, asyncFn, hello, map, toArray, add, concat, identity, always, multiply3 } = api(
     Object.keys(module),
-    evaluate
+    // Emulate serialization and de-serialization
+    async (program) => JSON.parse(JSON.stringify(await evaluate(program)))
   )
+
+  t.strictSame(
+    await identity([
+      identity(1),
+      identity(2),
+      identity(3),
+      identity(4),
+    ]),
+    [ 1,2,3,4 ]
+  );
 
   t.rejects(async () => {
     await evaluate('["ref", "notDefined"]')
@@ -106,6 +122,32 @@ test('should evaluate basic expressions correctly', async (t) => {
   t.strictSame(
     await identity(['ref', 'hello']),
     await identity(toArray('ref', 'hello'))
+  )
+
+  t.strictSame(
+    await asyncFn(),
+    'my-async-function'
+  )
+
+  t.strictSame(
+    await resolve('my-promise'),
+    'my-promise'
+  )
+
+  t.strictSame(
+    await instanceOf(resolve(asyncFn), Promise),
+    true
+  )
+
+  t.strictSame(
+    await evaluate(JSON.stringify(['call',
+      ['ref', 'instanceOf'],
+      [
+        ['await', ['call', ['ref', 'resolve'], [['ref', 'asyncFn']]]],
+        ['ref', 'Function']
+      ]
+    ])),
+    true
   )
 
   t.end()
