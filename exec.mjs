@@ -16,6 +16,8 @@ const exec = curry(async (env, expression) => {
 const reviver = env => async (key, value) => {
   debug(key, await (Array.isArray(await value) ? Promise.all(value) : value))
 
+  value = await value
+
   if (isNil(value)) return value
 
   // Await all values for all objects properties
