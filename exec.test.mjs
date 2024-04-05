@@ -12,6 +12,7 @@ const module = {
   map: fn => array => array.map(fn),
   filter: pred => array => array.filter(pred),
   hello: 'world',
+  noop: () => {},
   resolve: x => Promise.resolve(x),
   asyncFn: async () => 'my-async-function',
   instanceOf: (x, t) => x instanceof t,
@@ -47,11 +48,19 @@ test('should evaluate basic expressions correctly', async (t) => {
     null
   )
 
-  // Undefined is converted to null because native JSON serialization does not support undefined.
+  // Somewhat unexpected but JSON.stringify changes undefined to null when it
+  // is in an object
+  t.equal(JSON.stringify([undefined]), '[null]')
   t.equal(
     await identity(undefined),
     null
   )
+
+  // Consider using a different JSON.stringify if you want to support
+  // stringify-ing undefined.
+  t.rejects(async () => {
+    await noop()
+  })
 
   t.equal(
     await hello,
@@ -135,13 +144,13 @@ test('should evaluate basic expressions correctly', async (t) => {
     'my-promise'
   )
 
-  // Supports passing a promise as a function argument
+  // TODO: Supports passing a promise as a function argument
   // t.strictSame(
   //   await instanceOf(resolve(asyncFn), Promise),
   //   true
   // )
 
-  // Supports awaiting a promise returned from a function call
+  // TODO: Supports awaiting a promise returned from a function call
   // t.strictSame(
   //   await instanceOf(await resolve(asyncFn), Function),
   //   true
