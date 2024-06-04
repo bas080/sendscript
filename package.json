@@ -17,15 +17,15 @@
   },
   "scripts": {
     "test": "tap",
-    "version": "npm run docs && git add *.md",
+    "version": "npm run docs && git add *.md example",
     "docs": "markatzea README.mz | tee README.md && npx markdown-toc -i README.md"
   },
   "author": "Bas Huis",
   "license": "MIT",
   "devDependencies": {
-    "tap": "^18.5.2"
+    "tap": "^21.0.1"
   },
   "dependencies": {
-    "debug": "^4.3.4"
+    "debug": "^4.3.7"
   }
 }

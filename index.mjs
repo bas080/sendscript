@@ -1,4 +1,11 @@
-import api from './api.mjs'
-import exec from './exec.mjs'
+import stringify from './stringify.mjs'
+import makeModule from './module.mjs'
+import parse from './parse.mjs'
 
-export default { api, exec }
+export default function sendscript (module) {
+  return {
+    stringify,
+    parse: parse(module),
+    module: makeModule(module)
+  }
+}
