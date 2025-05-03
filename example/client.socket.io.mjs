@@ -1,14 +1,17 @@
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import api from '../api.mjs'
+import stringify from '../stringify.mjs'
+import module from '../module.mjs'
+import * as math from './math.mjs'
+import assert from 'node:assert'
 
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const exec = program => {
+const send = program => {
   return new Promise((resolve, reject) => {
-    client.emit('message', program, (error, result) => {
+    client.emit('message', stringify(program), (error, result) => {
       error
         ? reject(error)
         : resolve(result)
@@ -16,10 +19,15 @@ const exec = program => {
   })
 }
 
-const { add, square } = api(['add', 'square'], exec)
+const { add, square } = module(math)
 
-console.log(
-  await square(add(1, add(add(2, 3), 4)))
-)
+// The program to be sent over the wire
+const program = square(add(1, add(add(2, 3), 4)))
+
+const result = await send(program)
+
+console.log('Result: ', result)
+
+assert.equal(result, 100)
 
 process.exit(0)

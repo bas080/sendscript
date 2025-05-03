@@ -13,15 +13,13 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Module](#module)
   * [Server](#server)
   * [Client](#client)
-- [Reference](#reference)
-  * [`sendscript/api.mjs`](#sendscriptapimjs)
-  * [`sendscript/exec.mjs`](#sendscriptexecmjs)
 - [TypeScript](#typescript)
 - [Tests](#tests)
 - [Formatting](#formatting)
 - [Changelog](#changelog)
 - [Dependencies](#dependencies)
 - [License](#license)
+- [Roadmap](#roadmap)
 
 <!-- tocstop -->
 
@@ -58,16 +56,17 @@ Here a socket.io server that runs SendScript programs.
 // ./example/server.socket.io.mjs
 
 import { Server } from 'socket.io'
-import exec from '../exec.mjs'
+import Parse from '../parse.mjs'
 import * as math from './math.mjs'
 
+const parse = Parse(math)
 const server = new Server()
 const port = process.env.PORT || 3000
 
 server.on('connection', (socket) => {
   socket.on('message', async (program, callback) => {
     try {
-      const result = await exec(math, program)
+      const result = parse(program)
       callback(null, result) // Pass null as the first argument to indicate success
     } catch (error) {
       callback(error) // Pass the error to the callback
@@ -87,14 +86,17 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import api from '../api.mjs'
+import stringify from '../stringify.mjs'
+import module from '../module.mjs'
+import * as math from './math.mjs'
+import assert from 'node:assert'
 
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const exec = program => {
+const send = program => {
   return new Promise((resolve, reject) => {
-    client.emit('message', program, (error, result) => {
+    client.emit('message', stringify(program), (error, result) => {
       error
         ? reject(error)
         : resolve(result)
@@ -102,11 +104,16 @@ const exec = program => {
   })
 }
 
-const { add, square } = api(['add', 'square'], exec)
+const { add, square } = module(math)
 
-console.log(
-  await square(add(1, add(add(2, 3), 4)))
-)
+// The program to be sent over the wire
+const program = square(add(1, add(add(2, 3), 4)))
+
+const result = await send(program)
+
+console.log('Result: ', result)
+
+assert.equal(result, 100)
 
 process.exit(0)
 ```
@@ -114,6 +121,8 @@ process.exit(0)
 Now we run this server and a client script.
 
 ```bash
+set -e
+
 # Run the server
 node ./example/server.socket.io.mjs&
 
@@ -123,78 +132,19 @@ node ./example/client.socket.io.mjs
 pkill sendscript
 ```
 ```
-100
+Result:  100
 ```
-
-## Reference
-
-SendScript is essentially a way to serialize a program to then send over the
-wire and execute it somewhere else.
-
-We only have two modules. One that helps you write programs that can be sent
-over the wire and another for running that program.
-
-### `sendscript/api.mjs`
-
-The api module exports a function that takes two arguments.
-
-1. The schema, which represents the values that are available.
-2. The function that will be called with the serializable version of the
-   program.
-
-It returns an object that contains functions which are defined in the schema.
-These functions are a JavaScript API for writing programs that can be sent to
-a server.
-
-```js
-import api from './api.mjs'
-
-const  { add, subtract } = api(
-  ['add', 'subtract'],
-  serializableProgram => sendSomewhereToBeExecuted(serializableProgram)
-)
-
-await add(1, 2) // => 3
-await subtract(1, 2) // => -1
-await add(1, subtract(2, 3)) // => 0
-```
-
-The add and subtract functions are thennable. The execute function is called as
-soon as await or `.then` is used.
-
-> Notice that you do not have to await the subtract call. You only need to
-> await when you want to execute the program.
-
-This API is composable and wrappable.
-
-### `sendscript/exec.mjs`
-
-The exec function takes an environment object and any valid SendScript program.
-
-```js
-import exec from './exec.mjs'
-
-exec({
-  add: (a, b) => a + b,
-  subtract: (a, b) => a - b
-}, ['add', 1, [subtract, 1, 2]])
-```
-
-The array you see here is the LISP that SendScript uses to represent programs.
-
-You could use SendScript without knowing the details of how the LISP works. It
-is an implementation detail and might change over time.
 
 ## TypeScript
 
-There is a good use-case to write an environment module in TypeScript.
+There is a good use-case to write a module in TypeScript.
 
 1. Obviously the module would have the benefits that TypeScript offers when
    coding.
 2. You can use tools like [typedoc][typedoc] to generate docs from your types to
    share with consumers of your API.
 3. You can use the types of the module to coerce your client to adopt the
-   modules type.
+   module's type.
 
 ```bash
 # Create pretty docs for your module.
@@ -217,8 +167,7 @@ export default sendScriptApi([
 > [!NOTE]
 > Although type coercion on the client side can improve the development
 > experience, it does not represent the actual type.
-> Values are likely subject to serialization and deserialization,
-> particularly when interfacing with JSON formats.
+> Values are subject to serialization and deserialization.
 
 ## Tests
 
@@ -230,19 +179,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@0.1.4 test
+> sendscript@1.0.0 test
 > tap -R silent
 
 
-> sendscript@0.1.4 test
+> sendscript@1.0.0 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 110/110 )
-Branches     : 100% ( 32/32 )
-Functions    : 100% ( 10/10 )
-Lines        : 100% ( 110/110 )
+Statements   : 100% ( 239/239 )
+Branches     : 100% ( 71/71 )
+Functions    : 100% ( 18/18 )
+Lines        : 100% ( 239/239 )
 ================================================================================
 ```
 
@@ -277,6 +226,10 @@ No outdated packages found
 ## License
 
 See the [LICENSE.txt][license] file for details.
+
+## Roadmap
+
+- [ ] Support for simple lambdas to compose functions more easily.
 
 [license]:./LICENSE.txt
 [socket.io]:https://socket.io/
