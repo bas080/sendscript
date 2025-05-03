@@ -13,6 +13,7 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Module](#module)
   * [Server](#server)
   * [Client](#client)
+- [Async/Await](#asyncawait)
 - [TypeScript](#typescript)
 - [Tests](#tests)
 - [Formatting](#formatting)
@@ -135,6 +136,25 @@ pkill sendscript
 Result:  100
 ```
 
+## Async/Await
+
+SendScript supports async/await seamlessly within a single request. This avoids the performance pitfalls of waterfall-style messaging, which can be especially slow on high-latency networks.
+
+While it's possible to chain promises manually or use utility functions, native async/await support makes your code more readable, modern, and easier to reason about — aligning SendScript with today’s JavaScript best practices.
+
+```js
+const userId = 'user-123'
+const program = {
+  unread: await fetchUnreadMessages(userId),
+  emptyTrash: await emptyTrash(userId),
+  archived: await archiveMessages(selectMessages({ old: true }))
+}
+
+const result = await send(program)
+```
+
+This operation is done in a single round-trip. The result is an object with the defined properties and returned values.
+
 ## TypeScript
 
 There is a good use-case to write a module in TypeScript.
@@ -146,22 +166,15 @@ There is a good use-case to write a module in TypeScript.
 3. You can use the types of the module to coerce your client to adopt the
    module's type.
 
-```bash
-# Create pretty docs for your module.
-npx typedoc my-module.ts
-```
-
-Now we can use the `my-module.ts` file for the client API.
-
 ```ts
-import type * as MyModule from './my-module'
+import type * as math from './example/math.ts'
 
-import sendScriptApi from 'sendscript/api.mjs'
+import module from 'sendscript/module.mjs'
 
-export default sendScriptApi([
-  fnOne,
-  fnTwo,
-], /* perform websocket request */) as typeof MyModule
+export default module([
+  add,
+  squer,
+]) as typeof math
 ```
 
 > [!NOTE]
@@ -179,11 +192,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@1.0.0 test
+> sendscript@1.0.1 test
 > tap -R silent
 
 
-> sendscript@1.0.0 test
+> sendscript@1.0.1 test
 > tap report text-summary
 
 
