@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:bas080/sendscript.git"
+    "url": "git+ssh://git@github.com/bas080/sendscript.git"
   },
   "scripts": {
     "test": "tap",
