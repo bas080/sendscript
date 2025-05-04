@@ -1,7 +1,7 @@
 // ./example/server.socket.io.mjs
 
 import { Server } from 'socket.io'
-import Parse from '../parse.mjs'
+import Parse from 'sendscript/parse.mjs'
 import * as math from './math.mjs'
 
 const parse = Parse(math)

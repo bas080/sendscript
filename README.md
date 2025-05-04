@@ -33,7 +33,11 @@ needs.
 For this example we'll use [socket.io][socket.io].
 
 ```bash
-npm install --no-save socket.io socket.io-client
+npm link &&
+  npm install --no-save \
+    socket.io \
+    socket.io-client \
+    sendscript
 ```
 
 > We use the `--no-save` option because it's only for demonstration purposes.
@@ -57,7 +61,7 @@ Here a socket.io server that runs SendScript programs.
 // ./example/server.socket.io.mjs
 
 import { Server } from 'socket.io'
-import Parse from '../parse.mjs'
+import Parse from 'sendscript/parse.mjs'
 import * as math from './math.mjs'
 
 const parse = Parse(math)
@@ -87,8 +91,8 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import stringify from '../stringify.mjs'
-import module from '../module.mjs'
+import stringify from 'sendscript/stringify.mjs'
+import module from 'sendscript/module.mjs'
 import * as math from './math.mjs'
 import assert from 'node:assert'
 
@@ -218,11 +222,11 @@ send(square(add(1, 2)))
 We'll also generate the docs for this module.
 
 ```bash
+npm install --no-save \
+  typedoc \
+  typedoc-plugin-markdown
+
 typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
-```
-```
-[96m[info][0m Loaded plugin typedoc-plugin-markdown
-[96m[info][0m markdown generated at ./example/typescript/docs
 ```
 
 You can see the docs [here](./example/typescript/docs/globals.md)
@@ -242,11 +246,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@1.0.2 test
+> sendscript@1.0.3 test
 > tap -R silent
 
 
-> sendscript@1.0.2 test
+> sendscript@1.0.3 test
 > tap report text-summary
 
 

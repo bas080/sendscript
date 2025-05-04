@@ -22,7 +22,11 @@ needs.
 For this example we'll use [socket.io][socket.io].
 
 ```bash
-npm install --no-save socket.io socket.io-client
+npm link &&
+  npm install --no-save \
+    socket.io \
+    socket.io-client \
+    sendscript
 ```
 
 > We use the `--no-save` option because it's only for demonstration purposes.
@@ -46,7 +50,7 @@ Here a socket.io server that runs SendScript programs.
 // ./example/server.socket.io.mjs
 
 import { Server } from 'socket.io'
-import Parse from '../parse.mjs'
+import Parse from 'sendscript/parse.mjs'
 import * as math from './math.mjs'
 
 const parse = Parse(math)
@@ -76,8 +80,8 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import stringify from '../stringify.mjs'
-import module from '../module.mjs'
+import stringify from 'sendscript/stringify.mjs'
+import module from 'sendscript/module.mjs'
 import * as math from './math.mjs'
 import assert from 'node:assert'
 
