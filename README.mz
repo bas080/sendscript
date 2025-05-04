@@ -148,16 +148,31 @@ There is a good use-case to write a module in TypeScript.
 3. You can use the types of the module to coerce your client to adopt the
    module's type.
 
-```ts
-import type * as math from './example/math.ts'
+Let's say we have this module which we use on the server.
 
-import module from 'sendscript/module.mjs'
-
-export default module([
-  add,
-  squer,
-]) as typeof math
+```bash|ts bash
+cat ./example/typescript/math.ts
 ```
+
+We want to use this module on the client. We create a client version of that module and coerce the types to match those of the server.
+
+```bash|ts bash
+cat ./example/typescript/math.client.ts
+```
+
+We now use the client version of this module.
+
+```bash|ts bash
+cat ./example/typescript/client.ts
+```
+
+We'll also generate the docs for this module.
+
+```bash bash
+typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
+```
+
+You can see the docs [here](./example/typescript/docs/globals.md)
 
 > [!NOTE]
 > Although type coercion on the client side can improve the development
