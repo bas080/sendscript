@@ -1,9 +1,2 @@
-class BlendError extends Error { }
-class BlendExpressionError extends BlendError {}
-class BlendInvalidSchemaError extends BlendError {}
-
-export {
-  BlendError,
-  BlendExpressionError,
-  BlendInvalidSchemaError
-}
+export class SendScriptError extends Error {}
+export class SendScriptReferenceError extends SendScriptError {}

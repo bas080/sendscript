@@ -1,8 +1,6 @@
 import Debug from './debug.mjs'
 import isNil from './is-nil.mjs'
-
-class SendScriptError extends Error {}
-class SendScriptReferenceError extends SendScriptError {}
+import { SendScriptReferenceError } from './error.mjs'
 
 const debug = Debug.extend('parse')
 
@@ -14,13 +12,19 @@ export default (env) =>
     const resolved = {}
 
     JSON.parse(program, (key, value) => {
-      if (Array.isArray(value) && value[0] === 'await') {
-        awaits.push(((program, awaitId) => async () => {
-          const value = await JSON.parse(JSON.stringify(program), reviver)
-          resolved[awaitId] = value
+      if (!Array.isArray(value)) return value
 
-          debug('awaits', awaits)
-        })(value[1], value[2]))
+      const [operator, ...rest] = value
+
+      if (operator === 'await') {
+        const [program, awaitId] = rest
+
+        awaits.push(((program, awaitId) => async () => {
+          resolved[awaitId] = await JSON.parse(
+            JSON.stringify(program),
+            reviver
+          )
+        })(program, awaitId))
       }
 
       return value
