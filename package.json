@@ -3,6 +3,7 @@
   "version": "1.0.3",
   "description": "Blur the line between server and client code.",
   "module": true,
+  "bin": "./cli.mjs",
   "main": "index.mjs",
   "keywords": [
     "rpc",
@@ -26,6 +27,7 @@
     "tap": "^21.0.1"
   },
   "dependencies": {
+    "commander": "^13.1.0",
     "debug": "^4.3.7"
   }
 }
