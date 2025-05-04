@@ -1,3 +1,7 @@
+**sendscript**
+
+***
+
 # SendScript
 
 Write JS code that you can run on servers, browsers or other clients.
@@ -8,21 +12,6 @@ Write JS code that you can run on servers, browsers or other clients.
 [![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
 
 <!-- toc -->
-
-- [Socket example](#socket-example)
-  * [Module](#module)
-  * [Server](#server)
-  * [Client](#client)
-- [Async/Await](#asyncawait)
-- [TypeScript](#typescript)
-- [Tests](#tests)
-- [Formatting](#formatting)
-- [Changelog](#changelog)
-- [Dependencies](#dependencies)
-- [License](#license)
-- [Roadmap](#roadmap)
-
-<!-- tocstop -->
 
 SendScript leaves it up to you to choose HTTP, web-sockets or any other
 method of communication between servers and clients that best fits your
@@ -216,86 +205,3 @@ send(square(add(1, 2)))
 ```
 
 We'll also generate the docs for this module.
-
-```bash
-typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
-```
-```
-[96m[info][0m Loaded plugin typedoc-plugin-markdown
-[96m[info][0m markdown generated at ./example/typescript/docs
-```
-
-You can see the docs [here](./example/typescript/docs/globals.md)
-
-> [!NOTE]
-> Although type coercion on the client side can improve the development
-> experience, it does not represent the actual type.
-> Values are subject to serialization and deserialization.
-
-## Tests
-
-Tests with 100% code coverage.
-
-```bash
-npm t -- -R silent
-npm t -- report text-summary
-```
-```
-
-> sendscript@1.0.2 test
-> tap -R silent
-
-
-> sendscript@1.0.2 test
-> tap report text-summary
-
-
-=============================== Coverage summary ===============================
-Statements   : 100% ( 245/245 )
-Branches     : 100% ( 74/74 )
-Functions    : 100% ( 18/18 )
-Lines        : 100% ( 245/245 )
-================================================================================
-```
-
-## Formatting
-
-Standard because no config.
-
-```bash
-npx standard
-```
-
-## Changelog
-
-The [changelog][changelog] is generated using the useful
-[auto-changelog][auto-changelog] project.
-
-```bash
-npx auto-changelog -p
-```
-
-## Dependencies
-
-Check if packages are up to date on release.
-
-```bash
-npm outdated && echo 'No outdated packages found'
-```
-```
-No outdated packages found
-```
-
-## License
-
-See the [LICENSE.txt][license] file for details.
-
-## Roadmap
-
-- [ ] Support for simple lambdas to compose functions more easily.
-
-[license]:./LICENSE.txt
-[socket.io]:https://socket.io/
-[changelog]:./CHANGELOG.md
-[auto-changelog]:https://www.npmjs.com/package/auto-changelog
-[typedoc]:https://github.com/TypeStrong/typedoc
