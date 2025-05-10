@@ -18,11 +18,12 @@ needs.
 For this example we'll use [socket.io][socket.io].
 
 ```bash bash > /dev/null
-npm link &&
-  npm install --no-save \
-    socket.io \
-    socket.io-client \
-    sendscript
+set -e
+
+npm link
+cd ./example
+npm ci
+npm link sendscript
 ```
 
 > We use the `--no-save` option because it's only for demonstration purposes.
