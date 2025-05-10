@@ -1,14 +1,14 @@
-[**sendscript**](../README.md)
+[**sendscript-example**](../README.md)
 
 ***
 
-[sendscript](../globals.md) / square
+[sendscript-example](../README.md) / square
 
 # Function: square()
 
 > **square**(`a`): `number`
 
-Defined in: [math.ts:2](https://github.com/bas080/sendscript/blob/0a5e1c8ec2527d63d1e248f63568668058de388c/example/typescript/math.ts#L2)
+Defined in: [math.ts:2](https://github.com/bas080/sendscript/blob/eb2501d39e977e577b9caf58345d676709892a88/example/typescript/math.ts#L2)
 
 ## Parameters
 
