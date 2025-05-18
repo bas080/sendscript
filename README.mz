@@ -123,6 +123,12 @@ node ./example/client.socket.io.mjs
 pkill sendscript
 ```
 
+## Repl
+
+Sendscript ships with a barebones (no-dependencies) node-repl script. One can run it by simply typing `sendscript` in their console.
+
+> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
+
 ## Async/Await
 
 SendScript supports async/await seamlessly within a single request. This avoids the performance pitfalls of waterfall-style messaging, which can be especially slow on high-latency networks.

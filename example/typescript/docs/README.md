@@ -2,9 +2,6 @@
 
 ***
 
-# sendscript-example
+# Sendscript Example
 
-## Functions
-
-- [add](functions/add.md)
-- [square](functions/square.md)
+Showcases the use of sendscript in combination with TypeScript.

@@ -13,6 +13,7 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Module](#module)
   * [Server](#server)
   * [Client](#client)
+- [Repl](#repl)
 - [Async/Await](#asyncawait)
 - [TypeScript](#typescript)
 - [Tests](#tests)
@@ -140,6 +141,12 @@ pkill sendscript
 ```
 Result:  100
 ```
+
+## Repl
+
+Sendscript ships with a barebones (no-dependencies) node-repl script. One can run it by simply typing `sendscript` in their console.
+
+> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
 
 ## Async/Await
 
