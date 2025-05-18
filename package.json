@@ -27,6 +27,6 @@
   },
   "dependencies": {
     "commander": "^14.0.0",
-    "debug": "^4.3.7"
+    "debug": "^4.4.1"
   }
 }
