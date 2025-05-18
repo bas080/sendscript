@@ -123,13 +123,9 @@ node ./example/client.socket.io.mjs
 pkill sendscript
 ```
 
-## CLI
+## Repl
 
-Sendscript comes with a CLI to makes it easier to test and debug sendscript programs.
-
-```bash bash
-sendscript help
-```
+Sendscript ships with a barebones (no-dependencies) node-repl script. One can run it by simply typing `sendscript` in their console.
 
 > Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
 
