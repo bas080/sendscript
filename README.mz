@@ -123,6 +123,16 @@ node ./example/client.socket.io.mjs
 pkill sendscript
 ```
 
+## CLI
+
+Sendscript comes with a CLI to makes it easier to test and debug sendscript programs.
+
+```bash bash
+sendscript help
+```
+
+> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
+
 ## Async/Await
 
 SendScript supports async/await seamlessly within a single request. This avoids the performance pitfalls of waterfall-style messaging, which can be especially slow on high-latency networks.
