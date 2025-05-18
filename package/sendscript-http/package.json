@@ -1,0 +1,14 @@
+{
+  "name": "sendscript-http",
+  "version": "0.0.0",
+  "description": "A sendscript server and client for HTTP",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "subcommander": "^1.0.0"
+  }
+}

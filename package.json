@@ -1,31 +1,24 @@
 {
   "name": "sendscript",
-  "version": "1.0.3",
-  "description": "Blur the line between server and client code.",
-  "module": true,
-  "main": "index.mjs",
-  "keywords": [
-    "rpc",
-    "json",
-    "dsl",
-    "lisp",
-    "program"
+  "workspaces": [
+    "package/*"
   ],
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/bas080/sendscript.git"
+    "directories": {
+    "example": "example"
   },
   "scripts": {
-    "test": "tap",
-    "version": "npm run docs && git add *.md example",
-    "docs": "markatzea README.mz | tee README.md && npx markdown-toc -i README.md"
+    "test": "npm run test -ws",
+    "docs": "markatzea README.mz | tee README.md"
   },
-  "author": "Bas Huis",
-  "license": "MIT",
-  "devDependencies": {
-    "tap": "^21.0.1"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bas080/sendscript.git"
   },
-  "dependencies": {
-    "debug": "^4.4.1"
-  }
+  "author": "bas080",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bas080/sendscript/issues"
+  },
+  "homepage": "https://github.com/bas080/sendscript#readme",
+  "description": ""
 }
