@@ -1,5 +1,6 @@
 import { test } from 'tap'
 import Sendscript from './index.mjs'
+import superjson from 'superjson'
 
 const module = {
   add: (a, b) => a + b,
@@ -192,6 +193,13 @@ test('should evaluate basic expressions correctly', async (t) => {
       run(identity([identity(1), identity(2), identity(3), identity(4)])),
       [1, 2, 3, 4]
     )
+    t.end()
+  })
+
+  t.test('works with js Set', t => {
+    const set = new Set([1,2,3])
+
+    t.equal(run(identity(set)), set)
     t.end()
   })
 })
