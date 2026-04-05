@@ -17,8 +17,8 @@
   },
   "scripts": {
     "test": "tap",
-    "version": "npm run docs && git add *.md example",
-    "docs": "markatzea README.mz | tee README.md && npx markdown-toc -i README.md"
+    "version": "npm run docs",
+    "docs": "markatzea CONTRIBUTING.md"
   },
   "author": "Bas Huis",
   "license": "MIT",
