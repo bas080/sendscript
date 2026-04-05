@@ -23,9 +23,9 @@
   "author": "Bas Huis",
   "license": "MIT",
   "devDependencies": {
-    "tap": "^21.0.1"
+    "tap": "^21.6.2"
   },
   "dependencies": {
-    "debug": "^4.4.1"
+    "debug": "^4.4.3"
   }
 }
