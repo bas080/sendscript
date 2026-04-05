@@ -9,6 +9,7 @@ Write JS code that you can run on servers, browsers or other clients.
 
 <!-- toc -->
 
+- [Introduction](#introduction)
 - [Socket example](#socket-example)
   * [Module](#module)
   * [Server](#server)
@@ -25,6 +26,75 @@ Write JS code that you can run on servers, browsers or other clients.
 
 <!-- tocstop -->
 
+## Introduction
+
+There has been interest in improving APIs by allowing aggregations in a
+single request. Examples include
+
+- [JSON-RPC](https://json-rpc.dev/) which allows you to do multiple requests
+  but it does not allow you to compose the return value of one endpoint to be the
+  input/arguments of another.
+
+- [GraphQL](https://graphql.org/) is very cool but also introduces a new languages and the
+  tooling that is required to wield it.
+
+What SendScript attempts is to allow for very expressive queries and mutations to be performed
+that read and write like ordinary JS. That means that the queries and complete programs
+that are sent to the server from a client can also just run on the server as is. The only
+limitation being the serialization which by default is limited by JSON and could be extended by
+using more advanced (de)serialization libraries.
+
+SendScript produces an intermediate JSON representation of the program. Let's see what that looks like.
+
+```js
+import stringify from 'sendscript/stringify.mjs'
+import module from 'sendscript/module.mjs'
+
+const { add } = module(['add'])
+
+console.log(stringify(add(1,2)))
+```
+```json
+["call",["ref","add"],[1,2]]
+```
+
+We can then parse that JSON and it will evaluate down to a value.
+
+```js
+import Parse from 'sendscript/parse.mjs'
+
+const module = {
+  add(a, b) {
+    return a + b
+  }
+}
+
+const parse = Parse(module)
+
+const program = '["call",["ref","add"],[1,2]]'
+
+console.log(parse(program))
+```
+```json
+3
+```
+
+SendScript does more than a simple function call. It supports function
+composition and even await.
+
+This package is nothing more than the absolute core of sendscript. It
+includes:
+
+- The `module` function to create stubs to write the programs.
+- `stringify` which takes the program and returns a JSON string.
+- `parse` which takes the `stringify` JSON string and a real module and returns the result.
+
+The naming could use more love and there are many things to solve either in the core or around it.
+Things like supporting more complex (de)serializers, errors and maybe mixing client functions with
+sendscript programs. Contact me if I have piqued your interest.
+
+---
+
 SendScript leaves it up to you to choose HTTP, web-sockets or any other
 method of communication between servers and clients that best fits your
 needs.
@@ -32,17 +102,6 @@ needs.
 ## Socket example
 
 For this example we'll use [socket.io][socket.io].
-
-```bash
-set -e
-
-npm link
-cd ./example
-npm ci
-npm link sendscript
-```
-
-> We use the `--no-save` option because it's only for demonstration purposes.
 
 ### Module
 
@@ -234,7 +293,7 @@ npm install --no-save \
   typedoc \
   typedoc-plugin-markdown
 
-typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
+npx typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
 ```
 
 You can see the docs [here](./example/typescript/docs/globals.md)
@@ -254,11 +313,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@1.0.5 test
+> sendscript@1.0.6 test
 > tap -R silent
 
 
-> sendscript@1.0.5 test
+> sendscript@1.0.6 test
 > tap report text-summary
 
 
