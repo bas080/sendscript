@@ -25,6 +25,7 @@ const isExplicitAwait = (value) => (
   isThenable(value) && value[isAwaitPromise] === true
 )
 
+// Recursively resolve awaited values in a parsed tree
 const resolveAwaitedValues = (value) => {
   if (isThenable(value)) {
     return isExplicitAwait(value)
@@ -78,6 +79,7 @@ const resolveAwaitedValues = (value) => {
   return value
 }
 
+// Restore undefined values that were marked with a sentinel during deserialization
 const restoreUndefined = (value) => {
   if (value === undefinedSentinel) return undefined
 
