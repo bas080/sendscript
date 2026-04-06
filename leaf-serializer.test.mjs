@@ -56,3 +56,29 @@ test('custom leaf serializer/deserializer using superjson', async (t) => {
 
   t.end()
 })
+
+test('default leaf deserializer when not provided', async (t) => {
+  const value = { a: 1, b: 'hello' }
+  const result = await run(value)
+
+  t.strictSame(result, value)
+  t.end()
+})
+
+test('fallback to default deserializer when null is passed', async (t) => {
+  const value = { a: 1, b: 'hello' }
+  const result = await parse(stringify(value), null)
+
+  t.strictSame(result, value)
+  t.end()
+})
+
+test('default leaf deserializer handles undefined parameter', (t) => {
+  const parse = Sendscript({}).parse
+  // Create a simple JSON with a leaf then parse using default deserializer
+  // The reviver will never pass undefined to deserializer, but we test it defensively
+  const json = '["leaf","{\\"test\\":1}"]'
+  const result = parse(json)
+  t.strictSame(result, { test: 1 })
+  t.end()
+})

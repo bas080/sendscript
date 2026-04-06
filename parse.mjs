@@ -105,9 +105,7 @@ const spy = (fn) => (...args) => {
   return value
 }
 
-const defaultLeafDeserializer = (text) => (
-  text === undefined ? null : JSON.parse(text)
-)
+const defaultLeafDeserializer = (text) => JSON.parse(text)
 
 export default (env) =>
   function parse (program, leafDeserializer = defaultLeafDeserializer) {
