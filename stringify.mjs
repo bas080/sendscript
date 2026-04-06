@@ -7,10 +7,8 @@ import {
 
 const debug = Debug.extend('stringify')
 
-const replaced = Symbol('replaced')
 const keywords = ['ref', 'call', 'quote', 'await']
 const isKeyword = (v) => keywords.includes(v)
-let awaitId = -1
 
 const isPlainObject = (value) => {
   if (!value || typeof value !== 'object') return false
@@ -18,7 +16,7 @@ const isPlainObject = (value) => {
   return proto === Object.prototype || proto === null
 }
 
-function transformValue (value, leafSerializer) {
+function transformValue (value, leafSerializer, state) {
   debug(value)
 
   if (value === null) {
@@ -26,57 +24,46 @@ function transformValue (value, leafSerializer) {
   }
 
   if (typeof value === 'function' && typeof value.toJSON === 'function') {
-    return transformValue(value.toJSON(), leafSerializer)
+    return transformValue(value.toJSON(), leafSerializer, state)
   }
 
   if (value && value[ref]) {
-    const result = ['ref', value.name]
-    result[replaced] = replaced
-    return result
+    return ['ref', value.name]
   }
 
   if (value && value[call]) {
-    const result = ['call', transformValue(value.ref, leafSerializer), transformValue(value.args, leafSerializer)]
-    result[replaced] = replaced
-    return result
+    return ['call', transformValue(value.ref, leafSerializer, state), transformValue(value.args, leafSerializer, state)]
   }
 
   if (value && value[awaitSymbol]) {
-    awaitId += 1
-    const result = ['await', transformValue(value.ref, leafSerializer), awaitId]
-    result[replaced] = replaced
-    return result
+    state.awaitId += 1
+    return ['await', transformValue(value.ref, leafSerializer, state), state.awaitId]
   }
 
   if (Array.isArray(value)) {
-    if (!value[replaced]) {
-      const [operator, ...rest] = value
+    const [operator, ...rest] = value
 
-      if (isKeyword(operator)) {
-        const quoted = ['quote', operator]
-        quoted[replaced] = replaced
-        return [quoted, ...rest.map((item) => transformValue(item, leafSerializer))]
-      }
+    if (isKeyword(operator)) {
+      return [['quote', operator], ...rest.map((item) => transformValue(item, leafSerializer, state))]
     }
 
-    return value.map((item) => transformValue(item, leafSerializer))
+    return value.map((item) => transformValue(item, leafSerializer, state))
   }
 
   if (isPlainObject(value)) {
     const result = {}
 
     for (const key of Object.keys(value)) {
-      result[key] = transformValue(value[key], leafSerializer)
+      result[key] = transformValue(value[key], leafSerializer, state)
     }
 
     return result
   }
 
-  const result = ['leaf', leafSerializer(value)]
-  result[replaced] = replaced
-  return result
+  return ['leaf', leafSerializer(value)]
 }
 
 export default function stringify (program, leafSerializer = JSON.stringify) {
-  return JSON.stringify(transformValue(program, leafSerializer))
+  const state = { awaitId: -1 }
+  return JSON.stringify(transformValue(program, leafSerializer, state))
 }
