@@ -9,23 +9,6 @@ Write JS code that you can run on servers, browsers or other clients.
 
 <!-- toc -->
 
-- [Introduction](#introduction)
-- [Socket example](#socket-example)
-  * [Module](#module)
-  * [Server](#server)
-  * [Client](#client)
-- [Repl](#repl)
-- [Async/Await](#asyncawait)
-- [TypeScript](#typescript)
-- [Tests](#tests)
-- [Formatting](#formatting)
-- [Changelog](#changelog)
-- [Dependencies](#dependencies)
-- [License](#license)
-- [Roadmap](#roadmap)
-
-<!-- tocstop -->
-
 ## Introduction
 
 There has been interest in improving APIs by allowing aggregations in a
@@ -47,21 +30,21 @@ using more advanced (de)serialization libraries.
 SendScript produces an intermediate JSON representation of the program. Let's see what that looks like.
 
 ```js
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
+import stringify from 'sendscript/stringify.js'
+import module from 'sendscript/module.js'
 
 const { add } = module(['add'])
 
 console.log(stringify(add(1,2)))
 ```
 ```json
-["call",["ref","add"],[1,2]]
+["call",["ref","add"],[["leaf","1"],["leaf","2"]]]
 ```
 
 We can then parse that JSON and it will evaluate down to a value.
 
 ```js
-import Parse from 'sendscript/parse.mjs'
+import Parse from 'sendscript/parse.js'
 
 const module = {
   add(a, b) {
@@ -122,7 +105,7 @@ Here a socket.io server that runs SendScript programs.
 // ./example/server.socket.io.mjs
 
 import { Server } from 'socket.io'
-import Parse from 'sendscript/parse.mjs'
+import Parse from 'sendscript/parse.js'
 import * as math from './math.mjs'
 
 const parse = Parse(math)
@@ -152,8 +135,8 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
+import stringify from 'sendscript/stringify.js'
+import module from 'sendscript/module.js'
 import * as math from './math.mjs'
 import assert from 'node:assert'
 
@@ -253,7 +236,7 @@ We want to use this module on the client. We create a client version of that mod
 cat ./example/typescript/math.client.ts
 ```
 ```ts
-import module from 'sendscript/module.mjs'
+import module from 'sendscript/module.js'
 import type * as mathTypes from './math.ts'
 
 const math = module([
@@ -270,7 +253,7 @@ We now use the client version of this module.
 cat ./example/typescript/client.ts
 ```
 ```ts
-import stringify from 'sendscript/stringify.mjs'
+import stringify from 'sendscript/stringify.js'
 
 async function send<T>(program: T): Promise<T>{
   return (await fetch('/api', {
@@ -295,78 +278,3 @@ npm install --no-save \
 
 npx typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
 ```
-
-You can see the docs [here](./example/typescript/docs/globals.md)
-
-> [!NOTE]
-> Although type coercion on the client side can improve the development
-> experience, it does not represent the actual type.
-> Values are subject to serialization and deserialization.
-
-## Tests
-
-Tests with 100% code coverage.
-
-```bash
-npm t -- -R silent
-npm t -- report text-summary
-```
-```
-
-> sendscript@1.0.6 test
-> tap -R silent
-
-
-> sendscript@1.0.6 test
-> tap report text-summary
-
-
-=============================== Coverage summary ===============================
-Statements   : 100% ( 245/245 )
-Branches     : 100% ( 74/74 )
-Functions    : 100% ( 18/18 )
-Lines        : 100% ( 245/245 )
-================================================================================
-```
-
-## Formatting
-
-Standard because no config.
-
-```bash
-npx standard
-```
-
-## Changelog
-
-The [changelog][changelog] is generated using the useful
-[auto-changelog][auto-changelog] project.
-
-```bash
-npx auto-changelog -p
-```
-
-## Dependencies
-
-Check if packages are up to date on release.
-
-```bash
-npm outdated && echo 'No outdated packages found'
-```
-```
-No outdated packages found
-```
-
-## License
-
-See the [LICENSE.txt][license] file for details.
-
-## Roadmap
-
-- [ ] Support for simple lambdas to compose functions more easily.
-
-[license]:./LICENSE.txt
-[socket.io]:https://socket.io/
-[changelog]:./CHANGELOG.md
-[auto-changelog]:https://www.npmjs.com/package/auto-changelog
-[typedoc]:https://github.com/TypeStrong/typedoc

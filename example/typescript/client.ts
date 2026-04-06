@@ -1,4 +1,4 @@
-import stringify from 'sendscript/stringify.mjs'
+import stringify from 'sendscript/stringify.js'
 
 async function send<T>(program: T): Promise<T>{
   return (await fetch('/api', {

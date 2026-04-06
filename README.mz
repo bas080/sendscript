@@ -30,8 +30,8 @@ using more advanced (de)serialization libraries.
 SendScript produces an intermediate JSON representation of the program. Let's see what that looks like.
 
 ```js|json node --input-type=module | tee /tmp/sendscript.json
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
+import stringify from 'sendscript/stringify.js'
+import module from 'sendscript/module.js'
 
 const { add } = module(['add'])
 
@@ -41,7 +41,7 @@ console.log(stringify(add(1,2)))
 We can then parse that JSON and it will evaluate down to a value.
 
 ```js|json node --input-type=module
-import Parse from 'sendscript/parse.mjs'
+import Parse from 'sendscript/parse.js'
 
 const module = {
   add(a, b) {
@@ -99,7 +99,7 @@ Here a socket.io server that runs SendScript programs.
 // ./example/server.socket.io.mjs
 
 import { Server } from 'socket.io'
-import Parse from 'sendscript/parse.mjs'
+import Parse from 'sendscript/parse.js'
 import * as math from './math.mjs'
 
 const parse = Parse(math)
@@ -129,8 +129,8 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
+import stringify from 'sendscript/stringify.js'
+import module from 'sendscript/module.js'
 import * as math from './math.mjs'
 import assert from 'node:assert'
 

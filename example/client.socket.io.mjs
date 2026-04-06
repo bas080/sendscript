@@ -1,8 +1,8 @@
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
+import stringify from 'sendscript/stringify.js'
+import module from 'sendscript/module.js'
 import * as math from './math.mjs'
 import assert from 'node:assert'
 

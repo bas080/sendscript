@@ -12,6 +12,38 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./stringify": {
+      "types": "./dist/stringify.d.ts",
+      "import": "./dist/stringify.js"
+    },
+    "./stringify.js": {
+      "types": "./dist/stringify.d.ts",
+      "import": "./dist/stringify.js"
+    },
+    "./parse": {
+      "types": "./dist/parse.d.ts",
+      "import": "./dist/parse.js"
+    },
+    "./parse.js": {
+      "types": "./dist/parse.d.ts",
+      "import": "./dist/parse.js"
+    },
+    "./module": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.js"
+    },
+    "./module.js": {
+      "types": "./dist/module.d.ts",
+      "import": "./dist/module.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    },
+    "./cli.js": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
     }
   },
   "files": [

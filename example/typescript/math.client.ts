@@ -1,4 +1,4 @@
-import module from 'sendscript/module.mjs'
+import module from 'sendscript/module.js'
 import type * as mathTypes from './math.ts'
 
 const math = module([
