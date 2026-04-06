@@ -9,6 +9,7 @@ const isThenable = (value) => (
 )
 
 const isAwaitPromise = Symbol('sendscript-await')
+const undefinedSentinel = Symbol('sendscript-undefined')
 
 const isPlainObject = (value) => {
   if (!value || typeof value !== 'object') return false
@@ -78,14 +79,40 @@ const resolveAwaitedValues = (value) => {
   return value
 }
 
+const restoreUndefined = (value) => {
+  if (value === undefinedSentinel) return undefined
+
+  if (Array.isArray(value)) {
+    return value.map(restoreUndefined)
+  }
+
+  if (isPlainObject(value)) {
+    const result = {}
+
+    for (const key of Object.keys(value)) {
+      result[key] = restoreUndefined(value[key])
+    }
+
+    return result
+  }
+
+  return value
+}
+
 const spy = (fn) => (...args) => {
   const value = fn(...args)
   debug(args, ' => ', value)
   return value
 }
 
+const defaultLeafDeserializer = (text) => (
+  text === undefined ? null : JSON.parse(text)
+)
+
 export default (env) =>
-  function parse (program) {
+  function parse (program, leafDeserializer = defaultLeafDeserializer) {
+    const deserialize = leafDeserializer || defaultLeafDeserializer
+
     debug('program', program)
 
     const reviver = spy((key, value) => {
@@ -96,6 +123,11 @@ export default (env) =>
       }
 
       const [operator, ...rest] = value
+
+      if (operator === 'leaf') {
+        const leafValue = deserialize(rest[0])
+        return leafValue === undefined ? undefinedSentinel : leafValue
+      }
 
       if (operator === 'await') {
         const [program] = rest
@@ -141,5 +173,6 @@ export default (env) =>
     const parsed = JSON.parse(program, reviver)
     const result = resolveAwaitedValues(parsed)
 
-    return isThenable(result) ? result : result
+    const restored = restoreUndefined(result)
+    return isThenable(restored) ? restored : restored
   }
