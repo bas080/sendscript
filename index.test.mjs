@@ -182,6 +182,10 @@ test('should evaluate basic expressions correctly', async (t) => {
       run(identity(['ref', 'hello'])),
       run(identity(toArray('ref', 'hello')))
     )
+    t.strictSame(
+      run(identity(['leaf', 1, 2, 3])),
+      ['leaf', 1, 2, 3]
+    )
     t.end()
   })
 

@@ -7,7 +7,7 @@ import {
 
 const debug = Debug.extend('stringify')
 
-const keywords = ['ref', 'call', 'quote', 'await']
+const keywords = ['ref', 'call', 'quote', 'await', 'leaf']
 const isKeyword = (v) => keywords.includes(v)
 
 const isPlainObject = (value) => {
