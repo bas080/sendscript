@@ -18,6 +18,11 @@ const module = {
   asyncAdd: async (a, b) => a + b,
   aPromise: Promise.resolve(42),
   delayedIdentity: async (x) => x,
+  nullProto: () => {
+    const obj = Object.create(null)
+    obj.b = 'c'
+    return obj
+  },
   Function,
   Promise
 }
@@ -177,6 +182,12 @@ test('should evaluate basic expressions correctly', async (t) => {
       run(identity(['ref', 'hello'])),
       run(identity(toArray('ref', 'hello')))
     )
+    t.end()
+  })
+
+  t.test('null-prototype object traversal', (t) => {
+    const { nullProto } = sendscript.module
+    t.strictSame(run({ a: nullProto() }), { a: { b: 'c' } })
     t.end()
   })
 
