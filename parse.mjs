@@ -1,5 +1,4 @@
 import Debug from './debug.mjs'
-import isNil from './is-nil.mjs'
 import { SendScriptReferenceError } from './error.mjs'
 
 const debug = Debug.extend('parse')
@@ -114,7 +113,7 @@ export default (env) =>
     debug('program', program)
 
     const reviver = spy((key, value) => {
-      if (isNil(value)) return value
+      if (value === null) return value
 
       if (!Array.isArray(value)) {
         return value
