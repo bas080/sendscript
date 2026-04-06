@@ -246,6 +246,60 @@ You can see the docs [here](./example/typescript/docs/globals.md)
 > experience, it does not represent the actual type.
 > Values are subject to serialization and deserialization.
 
+## Leaf Serializer
+
+By default, SendScript uses JSON for serialization, which limits support to primitives and plain objects/arrays. To support richer JavaScript types like `Date`, `RegExp`, `BigInt`, `Map`, `Set`, and `undefined`, you can provide custom serialization functions.
+
+The `stringify` function accepts an optional `leafSerializer` parameter, and `parse` accepts an optional `leafDeserializer` parameter. These functions control how non-SendScript values (leaves) are encoded and decoded.
+
+### Example with superjson
+
+Here's how to use [superjson](https://github.com/blitz-js/superjson) to support extended types:
+
+```js
+import SuperJSON from 'superjson'
+import stringify from 'sendscript/stringify.mjs'
+import Parse from 'sendscript/parse.mjs'
+import module from 'sendscript/module.mjs'
+
+const leafSerializer = (value) => {
+  if (value === undefined) return JSON.stringify({ __undefined__: true })
+  return JSON.stringify(SuperJSON.serialize(value))
+}
+
+const leafDeserializer = (text) => {
+  const parsed = JSON.parse(text)
+  if (parsed && parsed.__undefined__ === true) return undefined
+  return SuperJSON.deserialize(parsed)
+}
+
+const { processData } = module(['processData'])
+
+// Program with Date, RegExp, and other types
+const program = {
+  createdAt: new Date('2020-01-01T00:00:00.000Z'),
+  pattern: /foo/gi,
+  count: BigInt('9007199254740992'),
+  items: new Set([1, 2, 3]),
+  mapping: new Map([['a', 1], ['b', 2]])
+}
+
+// Serialize with custom leaf serializer
+const json = stringify(processData(program), leafSerializer)
+
+// Parse with custom leaf deserializer
+const parse = Parse({
+  processData: (data) => ({
+    success: true,
+    received: data
+  })
+})
+
+const result = parse(json, leafDeserializer)
+```
+
+The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous and safe from colliding with SendScript operators.
+
 ## Tests
 
 Tests with 100% code coverage.

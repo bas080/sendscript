@@ -23,7 +23,9 @@
   "author": "Bas Huis",
   "license": "MIT",
   "devDependencies": {
-    "tap": "^21.6.3"
+    "superjson": "^2.2.6",
+    "tap": "^21.6.3",
+    "tape-check": "^1.0.0-rc.0"
   },
   "dependencies": {
     "debug": "^4.4.3"

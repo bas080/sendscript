@@ -1,5 +1,4 @@
 import Debug from './debug.mjs'
-import isNil from './is-nil.mjs'
 import {
   awaitSymbol,
   call,
@@ -8,59 +7,70 @@ import {
 
 const debug = Debug.extend('stringify')
 
-const replaced = Symbol('replaced')
-const keywords = ['ref', 'call', 'quote', 'await']
+const keywords = ['ref', 'call', 'quote', 'await', 'leaf']
 const isKeyword = (v) => keywords.includes(v)
-let awaitId = -1
 
-function replacer (key, value) {
-  debug(this, key, value)
+const isPlainObject = (value) => {
+  if (!value || typeof value !== 'object') return false
+  const proto = Object.getPrototypeOf(value)
+  return proto === Object.prototype || proto === null
+}
 
-  if (isNil(value)) {
-    return value
+// Recursively transform a program tree, encoding SendScript operators and leaf values
+function transformValue (value, leafSerializer, state) {
+  debug(value)
+
+  if (value === null) {
+    return null
   }
 
-  if (value[ref]) {
-    const result = ['ref', value.name]
-
-    result[replaced] = replaced
-
-    return result
+  // Normalize SendScript wrapper functions (ref, call, await)
+  if (typeof value === 'function' && typeof value.toJSON === 'function') {
+    return transformValue(value.toJSON(), leafSerializer, state)
   }
 
-  if (value[call]) {
-    const result = ['call', value.ref, value.args]
-
-    result[replaced] = replaced
-
-    return result
+  // Encode SendScript operators
+  if (value && value[ref]) {
+    return ['ref', value.name]
   }
 
-  if (value[awaitSymbol]) {
-    awaitId += 1
-    const result = ['await', value.ref, awaitId]
-
-    result[replaced] = replaced
-
-    return result
+  if (value && value[call]) {
+    return ['call', transformValue(value.ref, leafSerializer, state), transformValue(value.args, leafSerializer, state)]
   }
 
-  // Quote only the reserved string and not the complete array. Quoted values
-  // will be unquoted on parse. A quoted quote also.
-  if (!value[replaced] && Array.isArray(value)) {
+  if (value && value[awaitSymbol]) {
+    state.awaitId += 1
+    return ['await', transformValue(value.ref, leafSerializer, state), state.awaitId]
+  }
+
+  // Handle arrays: quote keyword operators, transform other arrays recursively
+  if (Array.isArray(value)) {
     const [operator, ...rest] = value
 
     if (isKeyword(operator)) {
-      const quoted = ['quote', operator]
-      quoted[replaced] = replaced
-
-      return [quoted, ...rest]
+      // Quote reserved keyword strings to preserve them as data
+      return [['quote', operator], ...rest.map((item) => transformValue(item, leafSerializer, state))]
     }
+
+    return value.map((item) => transformValue(item, leafSerializer, state))
   }
 
-  return value
+  // Recurse into plain objects
+  if (isPlainObject(value)) {
+    const result = {}
+
+    for (const key of Object.keys(value)) {
+      result[key] = transformValue(value[key], leafSerializer, state)
+    }
+
+    return result
+  }
+
+  // Encode non-JSON leaf values (Date, RegExp, BigInt, etc.)
+  return ['leaf', leafSerializer(value)]
 }
 
-export default function stringify (program) {
-  return JSON.stringify(program, replacer)
+export default function stringify (program, leafSerializer = JSON.stringify) {
+  const state = { awaitId: -1 }
+  return JSON.stringify(transformValue(program, leafSerializer, state))
 }
