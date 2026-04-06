@@ -39,19 +39,33 @@ const valueEquals = (a, b) => {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
+// Helper to get a human-readable type name
+const getTypeInfo = (value) => {
+  if (value === null) return 'null'
+  if (value === undefined) return 'undefined'
+  if (value instanceof Date) return 'Date'
+  if (value instanceof RegExp) return 'RegExp'
+  if (value instanceof Set) return 'Set'
+  if (value instanceof Map) return 'Map'
+  if (typeof value === 'bigint') return 'BigInt'
+  return typeof value
+}
+
 // Property 1: Round-trip - any value that can be serialized should deserialize to an equal value
-test('property: round-trip serialization with custom deserializer', check(
+test('property: round-trip serialization preserves value', check(
   gen.any,
   (t, value) => {
     t.plan(1)
     try {
       const serialized = leafSerializer(value)
       const deserialized = leafDeserializer(serialized)
-      t.ok(valueEquals(deserialized, value), `Round-trip preserved value: ${typeof value}`)
+      const typeInfo = getTypeInfo(value)
+      t.ok(valueEquals(deserialized, value), `Round-trip preserved ${typeInfo}`)
     } catch (e) {
       // If serialization fails on a particular value, that's acceptable
       // (not all values may be serializable)
-      t.pass(`Serialization of ${typeof value} threw, which is acceptable`)
+      const typeInfo = getTypeInfo(value)
+      t.pass(`Serialization of ${typeInfo} threw: ${e.message}`)
     }
   }
 ))
@@ -64,9 +78,11 @@ test('property: serialization is deterministic', check(
     try {
       const serialized1 = leafSerializer(value)
       const serialized2 = leafSerializer(value)
-      t.equal(serialized1, serialized2, 'Serialization is deterministic')
+      const typeInfo = getTypeInfo(value)
+      t.equal(serialized1, serialized2, `Serialization of ${typeInfo} is deterministic`)
     } catch (e) {
-      t.pass(`Serialization threw (acceptable for type: ${typeof value})`)
+      const typeInfo = getTypeInfo(value)
+      t.pass(`Serialization threw for ${typeInfo}: ${e.message}`)
     }
   }
 ))
@@ -78,16 +94,16 @@ test('property: serialized output is valid JSON', check(
     t.plan(1)
     try {
       const serialized = leafSerializer(value)
-      JSON.parse(serialized)
-      t.pass('Serialized output is valid JSON')
+      const parsed = JSON.parse(serialized)
+      t.ok(typeof parsed === 'object' || typeof parsed === 'string', 'Parsed JSON is an object or string')
     } catch (e) {
-      t.fail(`Invalid JSON output: ${e.message}`)
+      t.fail(`Invalid JSON output for ${getTypeInfo(value)}: ${e.message}`)
     }
   }
 ))
 
 // Property 4: Undefined handling - undefined values are preserved through round-trip
-test('property: undefined values are preserved', check(
+test('property: undefined values are preserved through serialization', check(
   gen.any,
   (t, value) => {
     t.plan(1)
@@ -97,6 +113,38 @@ test('property: undefined values are preserved', check(
       t.equal(deserialized, undefined, 'Undefined preserved through serialization')
     } else {
       t.pass('Value was not undefined')
+    }
+  }
+))
+
+// Property 5: Type distinctness - Different values should have different serializations (when possible)
+test('property: different primitives have different serializations', check(
+  gen.primitive,
+  gen.primitive,
+  (t, val1, val2) => {
+    t.plan(1)
+    if (val1 !== val2 && !(Number.isNaN(val1) && Number.isNaN(val2))) {
+      const ser1 = leafSerializer(val1)
+      const ser2 = leafSerializer(val2)
+      t.not(ser1, ser2, `Different primitives ${getTypeInfo(val1)} and ${getTypeInfo(val2)} have different serializations`)
+    } else {
+      t.pass('Primitives are equal or both NaN')
+    }
+  }
+))
+
+// Property 6: Idempotence of serialization - Re-parsing serialized value produces same serialization
+test('property: serialization round-trip is stable', check(
+  gen.any,
+  (t, value) => {
+    t.plan(1)
+    try {
+      const ser1 = leafSerializer(value)
+      const deser1 = leafDeserializer(ser1)
+      const ser2 = leafSerializer(deser1)
+      t.equal(ser1, ser2, `Serialization is stable for ${getTypeInfo(value)}`)
+    } catch (e) {
+      t.pass(`Serialization error for ${getTypeInfo(value)}: ${e.message}`)
     }
   }
 ))
