@@ -1,0 +1,32 @@
+# Source files
+src/
+test/
+*.ts
+
+# Development files
+tsconfig.json
+.gitignore
+.npmignore
+CONTRIBUTING.md
+
+# Build artifacts
+*.tsbuildinfo
+.tap/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Git
+.git/
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/

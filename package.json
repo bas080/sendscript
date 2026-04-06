@@ -5,29 +5,42 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "sendscript": "dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "LICENSE.txt",
+    "README.md"
+  ],
   "keywords": [
     "rpc",
     "json",
     "dsl",
     "lisp",
-    "program"
+    "program",
+    "typescript"
   ],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/bas080/sendscript.git"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "test": "tap 'test/**/*.test.ts'",
+    "test:watch": "tsc --watch",
     "version": "npm run docs && npm run build",
     "docs": "markatzea CONTRIBUTING.md",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build && npm test"
   },
   "author": "Bas Huis",
   "license": "MIT",
