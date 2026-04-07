@@ -17,6 +17,12 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Repl](#repl)
 - [Async/Await](#asyncawait)
 - [TypeScript](#typescript)
+- [Schema and Nested Modules](#schema-and-nested-modules)
+  * [Defining a Nested Module](#defining-a-nested-module)
+- [Validation (using Zod)](#validation-using-zod)
+  * [Validating structured input](#validating-structured-input)
+- [Leaf Serializer](#leaf-serializer)
+  * [Example with superjson](#example-with-superjson)
 - [Tests](#tests)
 - [Formatting](#formatting)
 - [Changelog](#changelog)
@@ -55,7 +61,7 @@ const { add } = module(['add'])
 console.log(stringify(add(1,2)))
 ```
 ```json
-["call",["ref","add"],[1,2]]
+["call",["ref","add"],[["leaf","1"],["leaf","2"]]]
 ```
 
 We can then parse that JSON and it will evaluate down to a value.
@@ -303,6 +309,128 @@ You can see the docs [here](./example/typescript/docs/globals.md)
 > experience, it does not represent the actual type.
 > Values are subject to serialization and deserialization.
 
+
+## Schema and Nested Modules
+
+Sendscript allows you to define your API as a **nested object of functions**, making it easy to organize your DSL into modules and submodules. Each function is instrumented so that when serialized, it produces a structured reference that can be safely sent and executed elsewhere.
+
+### Defining a Nested Module
+
+You can define a schema as either:
+
+1. **An object with nested objects** – submodules.
+2. **An array of function names** – automatically instrumented.
+
+```js
+import module from 'sendscript/module.mjs'
+
+const myModule = module({
+  math: ['add', 'sub'],
+
+  // Use an object with keys and true value
+  vector: {
+    add: true,
+    multiply: true
+  },
+
+  // or use an array.
+  utils: ['identity', 'always'],
+})
+```
+
+Functions are referenced via their **path in the module tree**:
+
+```js
+const { math, vector } = myModule
+
+math.add(
+  1,
+  vector.length(
+    vector.multiply([1,2], 3)
+  )
+)
+```
+
+## Validation (using Zod)
+
+SendScript focuses on program serialization and execution. For runtime input validation, you can use [Zod](https://zod.dev).
+
+### Validating structured input
+
+```js
+const userSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  roles: z.array(z.string())
+})
+
+export function createUser(user) {
+  userSchema.parse(user)
+
+  return { success: true }
+}
+```
+
+**Benefits**:
+
+- Ensures arguments match expected types and shapes.
+- Throws structured errors that can be propagated to clients.
+- Works with TypeScript for automatic type inference.
+
+## Leaf Serializer
+
+By default, SendScript uses JSON for serialization, which limits support to primitives and plain objects/arrays. To support richer JavaScript types like `Date`, `RegExp`, `BigInt`, `Map`, `Set`, and `undefined`, you can provide custom serialization functions.
+
+The `stringify` function accepts an optional `leafSerializer` parameter, and `parse` accepts an optional `leafDeserializer` parameter. These functions control how non-SendScript values (leaves) are encoded and decoded.
+
+### Example with superjson
+
+Here's how to use [superjson](https://github.com/blitz-js/superjson) to support extended types:
+
+```js
+import SuperJSON from 'superjson'
+import stringify from 'sendscript/stringify.mjs'
+import Parse from 'sendscript/parse.mjs'
+import module from 'sendscript/module.mjs'
+
+const leafSerializer = (value) => {
+  if (value === undefined) return JSON.stringify({ __undefined__: true })
+  return JSON.stringify(SuperJSON.serialize(value))
+}
+
+const leafDeserializer = (text) => {
+  const parsed = JSON.parse(text)
+  if (parsed && parsed.__undefined__ === true) return undefined
+  return SuperJSON.deserialize(parsed)
+}
+
+const { processData } = module(['processData'])
+
+// Program with Date, RegExp, and other types
+const program = {
+  createdAt: new Date('2020-01-01T00:00:00.000Z'),
+  pattern: /foo/gi,
+  count: BigInt('9007199254740992'),
+  items: new Set([1, 2, 3]),
+  mapping: new Map([['a', 1], ['b', 2]])
+}
+
+// Serialize with custom leaf serializer
+const json = stringify(processData(program), leafSerializer)
+
+// Parse with custom leaf deserializer
+const parse = Parse({
+  processData: (data) => ({
+    success: true,
+    received: data
+  })
+})
+
+const result = parse(json, leafDeserializer)
+```
+
+The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous and safe from colliding with SendScript operators.
+
 ## Tests
 
 Tests with 100% code coverage.
@@ -313,19 +441,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@1.0.6 test
+> sendscript@1.1.0 test
 > tap -R silent
 
 
-> sendscript@1.0.6 test
+> sendscript@1.1.0 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 245/245 )
-Branches     : 100% ( 74/74 )
-Functions    : 100% ( 18/18 )
-Lines        : 100% ( 245/245 )
+Statements   : 100% ( 328/328 )
+Branches     : 100% ( 138/138 )
+Functions    : 100% ( 23/23 )
+Lines        : 100% ( 328/328 )
 ================================================================================
 ```
 
