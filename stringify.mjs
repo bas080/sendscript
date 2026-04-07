@@ -17,7 +17,7 @@ const isPlainObject = (value) => {
 }
 
 // Recursively transform a program tree, encoding SendScript operators and leaf values
-function transformValue (value, leafSerializer, state) {
+function transformValue (value, leafSerializer) {
   debug(value)
 
   if (value === null) {
@@ -26,21 +26,20 @@ function transformValue (value, leafSerializer, state) {
 
   // Normalize SendScript wrapper functions (ref, call, await)
   if (typeof value === 'function' && typeof value.toJSON === 'function') {
-    return transformValue(value.toJSON(), leafSerializer, state)
+    return transformValue(value.toJSON(), leafSerializer)
   }
 
   // Encode SendScript operators
   if (value && value[ref]) {
-    return ['ref', value.name]
+    return ['ref', ...value.path]
   }
 
   if (value && value[call]) {
-    return ['call', transformValue(value.ref, leafSerializer, state), transformValue(value.args, leafSerializer, state)]
+    return ['call', transformValue(value.ref, leafSerializer), transformValue(value.args, leafSerializer)]
   }
 
   if (value && value[awaitSymbol]) {
-    state.awaitId += 1
-    return ['await', transformValue(value.ref, leafSerializer, state), state.awaitId]
+    return ['await', transformValue(value.ref, leafSerializer)]
   }
 
   // Handle arrays: quote keyword operators, transform other arrays recursively
@@ -49,10 +48,10 @@ function transformValue (value, leafSerializer, state) {
 
     if (isKeyword(operator)) {
       // Quote reserved keyword strings to preserve them as data
-      return [['quote', operator], ...rest.map((item) => transformValue(item, leafSerializer, state))]
+      return [['quote', operator], ...rest.map((item) => transformValue(item, leafSerializer))]
     }
 
-    return value.map((item) => transformValue(item, leafSerializer, state))
+    return value.map((item) => transformValue(item, leafSerializer))
   }
 
   // Recurse into plain objects
@@ -60,7 +59,7 @@ function transformValue (value, leafSerializer, state) {
     const result = {}
 
     for (const key of Object.keys(value)) {
-      result[key] = transformValue(value[key], leafSerializer, state)
+      result[key] = transformValue(value[key], leafSerializer)
     }
 
     return result
@@ -71,6 +70,5 @@ function transformValue (value, leafSerializer, state) {
 }
 
 export default function stringify (program, leafSerializer = JSON.stringify) {
-  const state = { awaitId: -1 }
-  return JSON.stringify(transformValue(program, leafSerializer, state))
+  return JSON.stringify(transformValue(program, leafSerializer))
 }

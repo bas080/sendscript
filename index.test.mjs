@@ -1,7 +1,14 @@
 import { test } from 'tap'
-import Sendscript from './index.mjs'
+import stringify from './stringify.mjs'
+import ssparse from './parse.mjs'
+import module from './module.mjs'
 
-const module = {
+const myModule = {
+  nested: {
+    again: {
+      T: () => true
+    }
+  },
   add: (a, b) => a + b,
   identity: (x) => x,
   concat: (a, b) => a.concat(b),
@@ -27,9 +34,23 @@ const module = {
   Promise
 }
 
-const sendscript = Sendscript(module)
-const { parse, stringify } = sendscript
-const run = (program) => parse(stringify(program))
+const schema = Object.keys(myModule).reduce((acc, key) => {
+  acc[key] = true
+
+  return acc
+}, {})
+
+schema.nested = { again: ['T'] }
+
+const sendscript = {
+  stringify,
+  parse: ssparse(myModule),
+  module: module(schema)
+}
+
+const { parse } = sendscript
+
+const run = (program) => sendscript.parse(sendscript.stringify(program))
 
 const RealPromise = Promise
 
@@ -51,8 +72,15 @@ test('should evaluate basic expressions correctly', async (t) => {
     concat,
     identity,
     always,
-    multiply3
+    multiply3,
+    nested
   } = sendscript.module
+
+  t.test('calling nested function works', t => {
+    t.equal(run(nested.again.T()), true)
+
+    t.end()
+  })
 
   t.test('nested await works', async (t) => {
     // Async identity passthrough

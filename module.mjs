@@ -1,12 +1,8 @@
-import {
-  awaitSymbol,
-  call,
-  ref
-} from './symbol.mjs'
+import { awaitSymbol, call, ref } from './symbol.mjs'
 
-function instrument (name) {
+function instrument (path) {
   function reference (...args) {
-    const called = instrument(name)
+    const called = instrument(path)
 
     called.toJSON = () => ({
       [call]: call,
@@ -19,8 +15,7 @@ function instrument (name) {
   }
 
   reference.then = (resolve) => {
-    const awaited = instrument(name)
-
+    const awaited = instrument(path)
     delete awaited.then
 
     awaited.toJSON = () => ({
@@ -35,18 +30,31 @@ function instrument (name) {
   reference.toJSON = () => ({
     [ref]: ref,
     reference: true,
-    name
+    path
   })
 
   return reference
 }
 
-export default function module (schema) {
-  if (!Array.isArray(schema)) return module(Object.keys(schema))
+export default function module (schema, parentPath = []) {
+  if (Array.isArray(schema)) {
+    return schema.reduce((acc, name) => {
+      acc[name] = instrument([...parentPath, name])
+      return acc
+    }, {})
+  }
 
-  return schema.reduce((api, name) => {
-    api[name] = instrument(name)
+  return Object.keys(schema).reduce((acc, key) => {
+    const value = schema[key]
 
-    return api
+    if (Array.isArray(value)) {
+      acc[key] = module(value, [...parentPath, key])
+    } else if (typeof value === 'object' && value !== null) {
+      acc[key] = module(value, [...parentPath, key])
+    } else {
+      acc[key] = instrument([...parentPath, key])
+    }
+
+    return acc
   }, {})
 }

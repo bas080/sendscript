@@ -90,9 +90,7 @@ const spy = (fn) => (...args) => {
 const defaultLeafDeserializer = (text) => JSON.parse(text)
 
 export default (env) =>
-  function parse (program, leafDeserializer = defaultLeafDeserializer) {
-    const deserialize = leafDeserializer || defaultLeafDeserializer
-
+  function parse (program, deserialize = defaultLeafDeserializer) {
     debug('program', program)
 
     const reviver = spy((key, value) => {
@@ -140,11 +138,18 @@ export default (env) =>
       }
 
       if (operator === 'ref') {
-        const [name] = rest
+        const path = rest // e.g., ["math","add"]
+        let current = env
 
-        if (Object.hasOwn(env, name)) return env[name]
+        for (const segment of path) {
+          if (current && Object.hasOwn(current, segment)) {
+            current = current[segment]
+          } else {
+            throw new SendScriptReferenceError({ key, value })
+          }
+        }
 
-        throw new SendScriptReferenceError({ key, value })
+        return current
       }
 
       return value

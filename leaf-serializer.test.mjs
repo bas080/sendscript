@@ -17,7 +17,7 @@ const module = {
   identity: (x) => x
 }
 
-const sendscript = Sendscript(module)
+const sendscript = Sendscript(Object.keys(module))
 const { parse, stringify } = sendscript
 const run = (program, serializer, deserializer) =>
   parse(stringify(program, serializer), deserializer)
