@@ -246,6 +246,74 @@ You can see the docs [here](./example/typescript/docs/globals.md)
 > experience, it does not represent the actual type.
 > Values are subject to serialization and deserialization.
 
+
+## Schema and Nested Modules
+
+Sendscript allows you to define your API as a **nested object of functions**, making it easy to organize your DSL into modules and submodules. Each function is instrumented so that when serialized, it produces a structured reference that can be safely sent and executed elsewhere.
+
+### Defining a Nested Module
+
+You can define a schema as either:
+
+1. **An object with nested objects** – submodules.
+2. **An array of function names** – automatically instrumented.
+
+```js
+import module from 'sendscript/module.mjs'
+
+const myModule = module({
+  math: ['add', 'sub'],
+
+  // Use an object with keys and true value
+  vector: {
+    add: true,
+    multiply: true
+  },
+
+  // or use an array.
+  utils: ['identity', 'always'],
+})
+```
+
+Functions are referenced via their **path in the module tree**:
+
+```js
+const { math, vector } = myModule
+
+math.add(
+  1,
+  vector.length(
+    vector.multiply([1,2], 3)
+  )
+)
+```
+
+## Validation (using Zod)
+
+SendScript focuses on program serialization and execution. For runtime input validation, you can use [Zod](https://zod.dev).
+
+### Validating structured input
+
+```js
+const userSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  roles: z.array(z.string())
+})
+
+export function createUser(user) {
+  userSchema.parse(user)
+
+  return { success: true }
+}
+```
+
+**Benefits**:
+
+- Ensures arguments match expected types and shapes.
+- Throws structured errors that can be propagated to clients.
+- Works with TypeScript for automatic type inference.
+
 ## Leaf Serializer
 
 By default, SendScript uses JSON for serialization, which limits support to primitives and plain objects/arrays. To support richer JavaScript types like `Date`, `RegExp`, `BigInt`, `Map`, `Set`, and `undefined`, you can provide custom serialization functions.
