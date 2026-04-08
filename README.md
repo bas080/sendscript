@@ -53,10 +53,11 @@ using more advanced (de)serialization libraries.
 SendScript produces an intermediate JSON representation of the program. Let's see what that looks like.
 
 ```js
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
+import Stringify from 'sendscript/stringify.mjs'
+import references from 'sendscript/references.mjs'
 
-const { add } = module(['add'])
+const { add } = references(['add'])
+const stringify = Stringify()
 
 console.log(stringify(add(1,2)))
 ```
@@ -75,7 +76,7 @@ const module = {
   }
 }
 
-const parse = Parse(module)
+const parse = Parse(['add'], module)
 
 const program = '["call",["ref","add"],[1,2]]'
 
@@ -131,7 +132,8 @@ import { Server } from 'socket.io'
 import Parse from 'sendscript/parse.mjs'
 import * as math from './math.mjs'
 
-const parse = Parse(math)
+const schema = Object.keys(math)
+const parse = Parse(schema, math)
 const server = new Server()
 const port = process.env.PORT || 3000
 
@@ -158,10 +160,12 @@ Now for a client that sends a program to the server.
 // ./example/client.socket.io.mjs
 
 import socketClient from 'socket.io-client'
-import stringify from 'sendscript/stringify.mjs'
-import module from 'sendscript/module.mjs'
-import * as math from './math.mjs'
+import Stringify from 'sendscript/stringify.mjs'
+import references from 'sendscript/references.mjs'
 import assert from 'node:assert'
+
+const { add, square } = references(['add', 'square'])
+const stringify = Stringify()
 
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
@@ -175,8 +179,6 @@ const send = program => {
     })
   })
 }
-
-const { add, square } = module(math)
 
 // The program to be sent over the wire
 const program = square(add(1, add(add(2, 3), 4)))
@@ -253,41 +255,24 @@ export const add = (a: number, b: number) => a + b
 export const square = (a: number) => a * a
 ```
 
-We want to use this module on the client. We create a client version of that module and coerce the types to match those of the server.
-
-```bash
-cat ./example/typescript/math.client.ts
-```
-```ts
-import module from 'sendscript/module.mjs'
-import type * as mathTypes from './math.ts'
-
-const math = module([
-  'add',
-  'square'
-]) as typeof mathTypes
-
-export default math
-```
-
-We now use the client version of this module.
+We can then coerce the types of the instrumented stubs.
 
 ```bash
 cat ./example/typescript/client.ts
 ```
 ```ts
-import stringify from 'sendscript/stringify.mjs'
+import math  from './math.client.ts'
+import Stringify from 'sendscript/stringify.mjs'
 
-async function send<T>(program: T): Promise<T>{
+const stringify = Stringify()
+
+// The return type of this function matches the type passed as the return of the program.
+async function send<T>(program: T): Promise<T> {
   return (await fetch('/api', {
     method: 'POST',
     body: stringify(program)
   })).json()
 }
-
-import math from './math.client.ts'
-
-const { add, square } = math
 
 send(square(add(1, 2)))
 ```
@@ -295,10 +280,6 @@ send(square(add(1, 2)))
 We'll also generate the docs for this module.
 
 ```bash
-npm install --no-save \
-  typedoc \
-  typedoc-plugin-markdown
-
 npx typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
 ```
 
@@ -316,32 +297,33 @@ Sendscript allows you to define your API as a **nested object of functions**, ma
 
 ### Defining a Nested Module
 
-You can define a schema as either:
-
-1. **An object with nested objects** – submodules.
-2. **An array of function names** – automatically instrumented.
+You can define a schema as **an array of function names**
 
 ```js
-import module from 'sendscript/module.mjs'
 
-const myModule = module({
-  math: ['add', 'sub'],
+const schema = [
+  'help',
+  'version',
 
-  // Use an object with keys and true value
-  vector: {
-    add: true,
-    multiply: true
-  },
-
-  // or use an array.
-  utils: ['identity', 'always'],
+  ['math', [
+    'add',
+    'sub'
+  ]],
+  ['vector', [
+    'add',
+    'multiply'
+  ]],
+  ['utils', [
+    'identity',
+    'always'
+  ]],
 })
 ```
 
 Functions are referenced via their **path in the module tree**:
 
 ```js
-const { math, vector } = myModule
+const { math, vector } = references(schema)
 
 math.add(
   1,
@@ -389,9 +371,9 @@ Here's how to use [superjson](https://github.com/blitz-js/superjson) to support 
 
 ```js
 import SuperJSON from 'superjson'
-import stringify from 'sendscript/stringify.mjs'
+import Stringify from 'sendscript/stringify.mjs'
+import references from 'sendscript/references.mjs'
 import Parse from 'sendscript/parse.mjs'
-import module from 'sendscript/module.mjs'
 
 const leafSerializer = (value) => {
   if (value === undefined) return JSON.stringify({ __undefined__: true })
@@ -404,7 +386,10 @@ const leafDeserializer = (text) => {
   return SuperJSON.deserialize(parsed)
 }
 
-const { processData } = module(['processData'])
+const schema = ['processData']
+
+const { processData } = references(schema)
+const stringify = Stringify(leafSerializer)
 
 // Program with Date, RegExp, and other types
 const program = {
@@ -416,17 +401,20 @@ const program = {
 }
 
 // Serialize with custom leaf serializer
-const json = stringify(processData(program), leafSerializer)
+const json = stringify(processData(program))
 
-// Parse with custom leaf deserializer
-const parse = Parse({
+// The environment
+const env = {
   processData: (data) => ({
     success: true,
     received: data
   })
-})
+}
 
-const result = parse(json, leafDeserializer)
+// Parse with custom leaf deserializer
+const parse = Parse(schema, env, leadDeserializer)
+
+const result = parse(json)
 ```
 
 The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous and safe from colliding with SendScript operators.
@@ -441,19 +429,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@1.1.0 test
+> sendscript@2.0.0 test
 > tap -R silent
 
 
-> sendscript@1.1.0 test
+> sendscript@2.0.0 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 328/328 )
-Branches     : 100% ( 138/138 )
-Functions    : 100% ( 23/23 )
-Lines        : 100% ( 328/328 )
+Statements   : 100% ( 348/348 )
+Branches     : 100% ( 145/145 )
+Functions    : 100% ( 24/24 )
+Lines        : 100% ( 348/348 )
 ================================================================================
 ```
 

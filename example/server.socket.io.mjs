@@ -4,7 +4,8 @@ import { Server } from 'socket.io'
 import Parse from 'sendscript/parse.mjs'
 import * as math from './math.mjs'
 
-const parse = Parse(math)
+const schema = Object.keys(math)
+const parse = Parse(schema, math)
 const server = new Server()
 const port = process.env.PORT || 3000
 
