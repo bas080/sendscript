@@ -1,9 +1,5 @@
-import module from 'sendscript/module.mjs'
 import type * as mathTypes from './math.ts'
+import Stringify from 'sendscript/stringify.mjs'
+import references from 'sendscript/references.mjs'
 
-const math = module([
-  'add',
-  'square'
-]) as typeof mathTypes
-
-export default math
+export default references(['add', 'square']) as typeof mathTypes

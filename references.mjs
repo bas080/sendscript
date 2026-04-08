@@ -37,22 +37,21 @@ function instrument (path) {
 }
 
 export default function module (schema, parentPath = []) {
-  if (Array.isArray(schema)) {
-    return schema.reduce((acc, name) => {
-      acc[name] = instrument([...parentPath, name])
-      return acc
-    }, {})
-  }
+  return schema.reduce((acc, item) => {
+    if (typeof item === 'string') {
+      // leaf function
+      acc[item] = instrument([...parentPath, item])
+    } else if (Array.isArray(item)) {
+      const [name, children] = item
 
-  return Object.keys(schema).reduce((acc, key) => {
-    const value = schema[key]
-
-    if (Array.isArray(value)) {
-      acc[key] = module(value, [...parentPath, key])
-    } else if (typeof value === 'object' && value !== null) {
-      acc[key] = module(value, [...parentPath, key])
+      if (Array.isArray(children)) {
+        // recurse: children can be strings or [name, children] arrays
+        acc[name] = module(children, [...parentPath, name])
+      } else {
+        throw new Error(`Expected children array for namespace "${name}"`)
+      }
     } else {
-      acc[key] = instrument([...parentPath, key])
+      throw new Error('Schema items must be strings or [name, children] arrays')
     }
 
     return acc
