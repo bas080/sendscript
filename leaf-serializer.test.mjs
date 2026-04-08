@@ -1,6 +1,7 @@
 import { test } from 'tap'
 import SuperJSON from 'superjson'
-import Sendscript from './index.mjs'
+import Parse from './parse.mjs'
+import Stringify from './stringify.mjs'
 
 const leafSerializer = (value) => {
   if (value === undefined) return JSON.stringify({ __sendscript_undefined__: true })
@@ -17,10 +18,14 @@ const module = {
   identity: (x) => x
 }
 
-const sendscript = Sendscript(Object.keys(module))
-const { parse, stringify } = sendscript
-const run = (program, serializer, deserializer) =>
-  parse(stringify(program, serializer), deserializer)
+const schema = Object.keys(module)
+
+const run = (program, serializer, deserializer) => {
+  const parse = Parse(schema, module, deserializer)
+  const stringify = Stringify(serializer)
+
+  return parse(stringify(program))
+}
 
 test('custom leaf serializer/deserializer using superjson', async (t) => {
   const value = {
@@ -62,15 +67,5 @@ test('default leaf deserializer when not provided', async (t) => {
   const result = await run(value)
 
   t.strictSame(result, value)
-  t.end()
-})
-
-test('default leaf deserializer handles undefined parameter', (t) => {
-  const parse = Sendscript({}).parse
-  // Create a simple JSON with a leaf then parse using default deserializer
-  // The reviver will never pass undefined to deserializer, but we test it defensively
-  const json = '["leaf","{\\"test\\":1}"]'
-  const result = parse(json)
-  t.strictSame(result, { test: 1 })
   t.end()
 })

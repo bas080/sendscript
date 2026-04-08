@@ -1,14 +1,14 @@
-import stringify from 'sendscript/stringify.mjs'
+import math  from './math.client.ts'
+import Stringify from 'sendscript/stringify.mjs'
 
-async function send<T>(program: T): Promise<T>{
+const stringify = Stringify()
+
+// The return type of this function matches the type passed as the return of the program.
+async function send<T>(program: T): Promise<T> {
   return (await fetch('/api', {
     method: 'POST',
     body: stringify(program)
   })).json()
 }
-
-import math from './math.client.ts'
-
-const { add, square } = math
 
 send(square(add(1, 2)))

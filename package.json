@@ -29,6 +29,8 @@
     "tape-check": "^1.0.0-rc.0"
   },
   "dependencies": {
-    "debug": "^4.4.3"
+    "debug": "^4.4.3",
+    "typedoc": "^0.28.18",
+    "typedoc-plugin-markdown": "^4.11.0"
   }
 }

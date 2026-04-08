@@ -69,6 +69,10 @@ function transformValue (value, leafSerializer) {
   return ['leaf', leafSerializer(value)]
 }
 
-export default function stringify (program, leafSerializer = JSON.stringify) {
-  return JSON.stringify(transformValue(program, leafSerializer))
+export default function stringify (leafSerializer = JSON.stringify) {
+  function stringify (program) {
+    return JSON.stringify(transformValue(program, leafSerializer))
+  }
+
+  return stringify
 }

@@ -1,7 +1,7 @@
 import { test } from 'tap'
-import stringify from './stringify.mjs'
-import ssparse from './parse.mjs'
-import module from './module.mjs'
+import Stringify from './stringify.mjs'
+import references from './references.mjs'
+import Parse from './parse.mjs'
 
 const myModule = {
   nested: {
@@ -30,27 +30,19 @@ const myModule = {
     obj.b = 'c'
     return obj
   },
-  Function,
   Promise
 }
 
-const schema = Object.keys(myModule).reduce((acc, key) => {
-  acc[key] = true
+const schema = Object.keys(myModule)
+schema.push(['nested', [
+  ['again', ['T']]
+]])
 
-  return acc
-}, {})
+const api = references(schema)
+const stringify = Stringify()
+const parse = Parse(schema, myModule)
 
-schema.nested = { again: ['T'] }
-
-const sendscript = {
-  stringify,
-  parse: ssparse(myModule),
-  module: module(schema)
-}
-
-const { parse } = sendscript
-
-const run = (program) => sendscript.parse(sendscript.stringify(program))
+const run = (program) => parse(stringify(program))
 
 const RealPromise = Promise
 
@@ -61,7 +53,6 @@ test('should evaluate basic expressions correctly', async (t) => {
     resolve,
     delayedIdentity,
     noop,
-    Function,
     Promise,
     instanceOf,
     asyncFn,
@@ -74,7 +65,16 @@ test('should evaluate basic expressions correctly', async (t) => {
     always,
     multiply3,
     nested
-  } = sendscript.module
+  } = api
+
+  t.test('mix await without await', async t => {
+    const [one, two] = await run([await resolve(1), resolve(2)])
+
+    t.equal(one, 1)
+    t.ok(two instanceof RealPromise)
+
+    t.end()
+  })
 
   t.test('calling nested function works', t => {
     t.equal(run(nested.again.T()), true)
@@ -143,9 +143,6 @@ test('should evaluate basic expressions correctly', async (t) => {
     t.strictSame(await run(asyncFn()), 'my-async-function')
     t.strictSame(await run(await resolve('my-promise')), 'my-promise')
     t.strictSame(run(instanceOf(resolve(asyncFn), Promise)), true)
-    t.strictSame(
-      await run(instanceOf(await resolve(asyncFn), Function)), true
-    )
     t.strictSame(
       await run({ a: await resolve('b') }),
       { a: 'b' }
@@ -218,7 +215,7 @@ test('should evaluate basic expressions correctly', async (t) => {
   })
 
   t.test('null-prototype object traversal', (t) => {
-    const { nullProto } = sendscript.module
+    const { nullProto } = api
     t.strictSame(run({ a: nullProto() }), { a: { b: 'c' } })
     t.end()
   })
@@ -237,4 +234,79 @@ test('should evaluate basic expressions correctly', async (t) => {
     )
     t.end()
   })
+})
+
+test('stringify: invalid children throws', t => {
+  const invalidSchema = [
+    ['math', 'add']
+  ]
+
+  t.throws(() => Parse(invalidSchema, {}))
+  t.throws(() => Parse([Symbol('no-allowed')], {}))
+  t.end()
+})
+
+test('forbidden/reflection access should be blocked', async (t) => {
+  function run (program) {
+    return parse(JSON.stringify(program))
+  }
+
+  t.test('cannot access constructor via ref', (t) => {
+    // try to reach the constructor of nested.again.T
+    t.throws(() => run(['ref', 'nested', 'again', 'T', 'constructor']))
+    t.end()
+  })
+
+  t.test('cannot access prototype property', (t) => {
+    // direct prototype traversal attempt
+    t.throws(() => run(['ref', 'nested', '__proto__']))
+    t.throws(() => run(['ref', 'nested', 'again', '__proto__']))
+    t.end()
+  })
+
+  t.test('cannot reach Function constructor', (t) => {
+    // many modules may accidentally expose Function; this should not be available via ref
+    t.throws(() => run(['ref', 'Function']))
+    t.end()
+  })
+
+  t.test('cannot call Function to execute code', (t) => {
+    // If Function were reachable, this would execute arbitrary code
+    const program = ['call', ['ref', 'Function'], [['leaf', '"return 1 + 2"']]]
+    t.throws(() => run(program))
+    t.end()
+  })
+
+  t.test('cannot access global Promise constructor via ref', (t) => {
+    t.throws(() => run(['ref', 'Promise', 'prototype', 'then']))
+    t.end()
+  })
+
+  t.test('cannot access Object.prototype methods', (t) => {
+    // toString is a common vector for prototype access
+    t.throws(() => run(['ref', 'toString']))
+    t.throws(() => run(['ref', 'nested', 'again', 'T', 'toString']))
+    t.end()
+  })
+
+  t.test('cannot reach process or global (if accidentally exposed)', (t) => {
+    // attempt common global names; parser should not resolve them
+    t.throws(() => run(['ref', 'process']))
+    t.throws(() => run(['ref', 'global']))
+    t.end()
+  })
+
+  t.test('cannot use constructor.constructor to reach Function', (t) => {
+    // attempt: nested.again.T.constructor.constructor
+    t.throws(() => run(['ref', 'nested', 'again', 'T', 'constructor', 'constructor']))
+    t.end()
+  })
+
+  t.test('throws when trying to get something that does not exist', (t) => {
+    // Ensure array that contains a ref-like array stays as data if not a SendScript ref wrapper:
+    t.throws(() => run(['ref', 'doesNotExist']))
+    t.end()
+  })
+
+  t.end()
 })
