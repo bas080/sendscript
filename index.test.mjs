@@ -3,6 +3,8 @@ import Stringify from './stringify.mjs'
 import references from './references.mjs'
 import Parse from './parse.mjs'
 
+const order = []
+
 const myModule = {
   nested: {
     again: {
@@ -12,6 +14,16 @@ const myModule = {
   add: (a, b) => a + b,
   identity: (x) => x,
   concat: (a, b) => a.concat(b),
+  delay: (value, ms) => {
+    return new Promise(resolve => {
+      order.push(`${value} start`)
+      setTimeout(() => {
+        order.push(`${value} end`)
+
+        resolve(value)
+      }, ms)
+    })
+  },
   toArray: (...array) => array,
   always: (x) => () => x,
   multiply3: (a) => (b) => (c) => a * b * c,
@@ -51,6 +63,7 @@ test('should evaluate basic expressions correctly', async (t) => {
     aPromise,
     asyncAdd,
     resolve,
+    delay,
     delayedIdentity,
     noop,
     Promise,
@@ -66,6 +79,48 @@ test('should evaluate basic expressions correctly', async (t) => {
     multiply3,
     nested
   } = api
+
+  t.test('await evaluation order matches JS semantics', async (t) => {
+    const lorder = []
+
+    const ldelay = (label, ms) => new RealPromise((resolve) => {
+      lorder.push(label + ' start')
+      setTimeout(() => {
+        lorder.push(label + ' end')
+        resolve(label)
+      }, ms)
+    })
+
+    const lresult = [
+      await ldelay('a', 30),
+      await ldelay('b', 10)
+    ]
+
+    t.same(lresult, ['a', 'b'])
+    t.same(lorder, [
+      'a start',
+      'a end',
+      'b start',
+      'b end'
+    ])
+
+    // TODO: Write it what ss touches
+
+    const result = await run([
+      await delay('a', 30),
+      await delay('b', 10)
+    ])
+
+    t.same(result, ['a', 'b'])
+    t.same(order, [
+      'a start',
+      'a end',
+      'b start',
+      'b end'
+    ])
+
+    t.end()
+  })
 
   t.test('mix await without await', async t => {
     const [one, two] = await run([await resolve(1), resolve(2)])
@@ -216,7 +271,8 @@ test('should evaluate basic expressions correctly', async (t) => {
 
   t.test('null-prototype object traversal', (t) => {
     const { nullProto } = api
-    t.strictSame(run({ a: nullProto() }), { a: { b: 'c' } })
+    const other = myModule.nullProto()
+    t.strictSame(run({ a: nullProto() }), { a: other })
     t.end()
   })
 
