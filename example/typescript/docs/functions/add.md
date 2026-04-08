@@ -8,7 +8,7 @@
 
 > **add**(`a`, `b`): `number`
 
-Defined in: [math.ts:1](https://github.com/bas080/sendscript/blob/ffa4feaeee11b6652b89c5412b2af937139edac5/example/typescript/math.ts#L1)
+Defined in: [math.ts:1](https://github.com/bas080/sendscript/blob/357ac0ef3384f294e4f9bb179d5a675afda5fd19/example/typescript/math.ts#L1)
 
 ## Parameters
 
