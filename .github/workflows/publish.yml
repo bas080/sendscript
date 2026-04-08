@@ -1,4 +1,4 @@
-name: Publish Package
+name: Release and Publish
 
 on:
   push:
@@ -6,20 +6,57 @@ on:
       - '*'
 
 permissions:
+  contents: write
   id-token: write  # Required for OIDC
-  contents: read
 
 jobs:
-  publish:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['lts/*', 'latest']
+      fail-fast: true
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+
+  release:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: 'latest'
+          cache: npm
+
       - run: npm ci
-      - run: npm run build --if-present
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 'latest'
+          cache: npm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
       - run: npm test
       - run: npm publish
