@@ -92,7 +92,7 @@ composition and even await.
 This package is nothing more than the absolute core of sendscript. It
 includes:
 
-- The `module` function to create stubs to write the programs.
+- The `references` function to create stubs to write the programs.
 - `stringify` which takes the program and returns a JSON string.
 - `parse` which takes the `stringify` JSON string and a real module and returns the result.
 
@@ -429,19 +429,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@2.0.1 test
+> sendscript@2.1.0 test
 > tap -R silent
 
 
-> sendscript@2.0.1 test
+> sendscript@2.1.0 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 348/348 )
-Branches     : 100% ( 145/145 )
-Functions    : 100% ( 24/24 )
-Lines        : 100% ( 348/348 )
+Statements   : 100% ( 326/326 )
+Branches     : 100% ( 118/118 )
+Functions    : 100% ( 21/21 )
+Lines        : 100% ( 326/326 )
 ================================================================================
 ```
 
