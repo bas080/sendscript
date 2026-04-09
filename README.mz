@@ -63,7 +63,7 @@ composition and even await.
 This package is nothing more than the absolute core of sendscript. It
 includes:
 
-- The `module` function to create stubs to write the programs.
+- The `references` function to create stubs to write the programs.
 - `stringify` which takes the program and returns a JSON string.
 - `parse` which takes the `stringify` JSON string and a real module and returns the result.
 
