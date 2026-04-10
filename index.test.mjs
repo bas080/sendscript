@@ -2,6 +2,7 @@ import { test } from 'tap'
 import Stringify from './stringify.mjs'
 import references from './references.mjs'
 import Parse from './parse.mjs'
+import { SendScriptSerializationError } from './error.mjs'
 
 const order = []
 
@@ -225,12 +226,30 @@ test('should evaluate basic expressions correctly', async (t) => {
     t.end()
   })
 
+  t.test('throws if stringify returns undefined', t => {
+    // This is to prevent accidentally sending payloads that make little sense.
+
+    // Check if it throw the expected error type.
+    try {
+      run(undefined)
+    } catch (error) {
+      t.ok(error instanceof SendScriptSerializationError)
+    }
+
+    t.throws(() => run(undefined))
+    t.throws(() => run(new Set()))
+    t.throws(() => run(identity(undefined)))
+    t.throws(() => run(() => {}))
+
+    t.end()
+  })
+
   t.test('basic types and identity', (t) => {
     t.equal(run(identity(null)), null)
-    t.equal(run(identity(undefined)), null)
     t.equal(run(noop()), undefined)
     t.equal(run(identity(1)), 1)
     t.strictSame(run(identity([])), [])
+    t.strictSame(run(identity({})), {})
     t.strictSame(run(identity([identity(1), 2, 3])), [1, 2, 3])
     t.strictSame(run(always('hello')()), 'hello')
     t.end()
