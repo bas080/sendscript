@@ -1,4 +1,5 @@
 import Debug from './debug.mjs'
+import { SendScriptSerializationError } from './error.mjs'
 import {
   awaitSymbol,
   call,
@@ -69,7 +70,17 @@ function transformValue (value, leafSerializer) {
   return ['leaf', leafSerializer(value)]
 }
 
-export default function stringify (leafSerializer = JSON.stringify) {
+function strictStringify (x) {
+  const typeOf = typeof x
+
+  if (typeOf === 'object' || typeOf === 'function' || x === undefined) {
+    throw new SendScriptSerializationError(`Cannot and should not attempt to serialize ${x}`)
+  }
+
+  return JSON.stringify(x)
+}
+
+export default function stringify (leafSerializer = strictStringify) {
   function stringify (program) {
     return JSON.stringify(transformValue(program, leafSerializer))
   }
