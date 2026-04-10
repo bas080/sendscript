@@ -6,7 +6,7 @@ import { SendScriptSerializationError } from './error.mjs'
 
 const order = []
 
-const myModule = {
+const myModuleOrig = {
   nested: {
     again: {
       T: () => true
@@ -46,7 +46,10 @@ const myModule = {
   Promise
 }
 
-const schema = Object.keys(myModule)
+// We want to support prototype chain when parsing.
+const myModule = Object.create(myModuleOrig)
+const schema = Object.keys(myModuleOrig)
+
 schema.push(['nested', [
   ['again', ['T']]
 ]])
