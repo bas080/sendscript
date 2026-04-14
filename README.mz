@@ -183,7 +183,20 @@ Sendscript ships with a barebones (no-dependencies) node-repl script. One can ru
 
 > Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
 
-## Async/Await
+## Promises
+
+### .then / .catch
+
+Supported since vs `v2.3`.
+
+```js
+const getOrCreatePost = send(createPost(title).catch(createPost(title)))
+```
+
+You will likely need to define better helpers that makes it safer to handle rejections and work with promises. It is however sensible to have
+this basic behavior for the sendscript DSL and parser.
+
+### await
 
 SendScript supports async/await seamlessly within a single request. This avoids the performance pitfalls of waterfall-style messaging, which can be especially slow on high-latency networks.
 
