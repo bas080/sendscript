@@ -74,16 +74,14 @@ core or around it. Things like supporting more complex (de)serializers, errors
 and maybe mixing client functions with sendscript programs. Contact me if I have
 piqued your interest.
 
----
-
-SendScript leaves it up to you to choose HTTP, web-sockets or any other method
-of communication between servers and clients that best fits your needs.
-
 ## Reference
 
 <!-- Reference -->
 
 ## Socket example
+
+SendScript leaves it up to you to choose HTTP, web-sockets or any other method
+of communication between servers and clients that best fits your needs.
 
 For this example we'll use [socket.io][socket.io].
 
