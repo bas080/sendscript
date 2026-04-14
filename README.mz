@@ -79,6 +79,10 @@ piqued your interest.
 SendScript leaves it up to you to choose HTTP, web-sockets or any other method
 of communication between servers and clients that best fits your needs.
 
+## Reference
+
+<!-- Reference -->
+
 ## Socket example
 
 For this example we'll use [socket.io][socket.io].
