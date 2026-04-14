@@ -100,12 +100,7 @@ function instrument (path) {
 /**
  * Builds a nested API structure from a schema definition.
  *
- * Schema supports:
- * - string => leaf function node
- * - [name, children] => namespace with nested schema
- *
  * @param {Schema} schema
- * @param {Array<string>} [parentPath=[]]
  * @returns {Object} Nested instrumented API object
  *
  * @throws {Error} If schema format is invalid
