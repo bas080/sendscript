@@ -29,6 +29,8 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Formatting](#formatting)
 - [Changelog](#changelog)
 - [Dependencies](#dependencies)
+- [License](#license)
+- [Roadmap](#roadmap)
 
 <!-- tocstop -->
 
@@ -442,11 +444,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@2.3.0 test
+> sendscript@2.3.1 test
 > tap -R silent
 
 
-> sendscript@2.3.0 test
+> sendscript@2.3.1 test
 > tap report text-summary
 
 
@@ -483,6 +485,19 @@ Check if packages are up to date on release.
 npm outdated && echo 'No outdated packages found'
 ```
 ```
-Package  Current   Wanted   Latest  Location              Depended by
-typedoc  0.28.18  0.28.19  0.28.19  node_modules/typedoc  master
+No outdated packages found
 ```
+
+## License
+
+See the [LICENSE.txt][license] file for details.
+
+## Roadmap
+
+- [ ] Support for simple lambdas to compose functions more easily.
+
+[license]:./LICENSE.txt
+[socket.io]:https://socket.io/
+[changelog]:./CHANGELOG.md
+[auto-changelog]:https://www.npmjs.com/package/auto-changelog
+[typedoc]:https://github.com/TypeStrong/typedoc
