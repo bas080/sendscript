@@ -1,6 +1,6 @@
 {
   "name": "sendscript",
-  "version": "2.3.8",
+  "version": "2.3.9",
   "description": "Blur the line between server and client code.",
   "module": true,
   "main": "index.mjs",

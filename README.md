@@ -157,15 +157,10 @@ Returns **(any | [Promise](https://developer.mozilla.org/docs/Web/JavaScript/Ref
 
 Builds a nested API structure from a schema definition.
 
-Schema supports:
-
-*   string => leaf function node
-*   \[name, children] => namespace with nested schema
-
 #### Parameters
 
 *   `schema` **[Schema](#schema)**&#x20;
-*   `parentPath` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)>**  (optional, default `[]`)
+*   `parentPath`   (optional, default `[]`)
 
 <!---->
 
