@@ -6,13 +6,14 @@ function flattenSchema (schema) {
 
   for (const item of schema) {
     if (typeof item === 'string') {
-      // leaf function
       obj[item] = true
     } else if (Array.isArray(item)) {
       const [name, children] = item
+
       if (!Array.isArray(children)) {
         throw new Error(`Expected children array for namespace "${name}"`)
       }
+
       obj[name] = flattenSchema(children)
     } else {
       throw new Error('Schema items must be strings or [name, children] arrays')
@@ -38,7 +39,6 @@ const spy = (type, fn) => (...args) => {
   return value
 }
 
-// Recursively resolve awaited values in a parsed tree
 const evaluate = spy('eval', (value, awaits = []) => {
   if (value === undefinedSentinel) return undefined
 
@@ -47,49 +47,41 @@ const evaluate = spy('eval', (value, awaits = []) => {
 
     if (operator === 'await') {
       const [index] = rest
-      // No need to check index. It is closely tied to the program.
-      // if (typeof index !== 'number' || index < 0 || index >= awaitsResolved.length) {
-      //   throw new Error(`Invalid await index: ${index}`);
-      // }
       return awaits[index]
     }
 
     if (operator === 'then') {
       const [v, onResolve, onReject] = rest
-      return evaluate(v, awaits).then(evaluate(onResolve, awaits), evaluate(onReject, awaits))
+      return evaluate(v, awaits).then(
+        evaluate(onResolve, awaits),
+        evaluate(onReject, awaits)
+      )
     }
 
     if (operator === 'call') {
-      // Step 1: evaluate the function itself
       let [fn, args] = rest
       fn = evaluate(fn, awaits)
 
-      // Step 2: evaluate each argument AFTER fn is ready
       for (let i = 0; i < args.length; i++) {
         args[i] = evaluate(args[i], awaits)
       }
 
-      // Step 3: call the function
       return fn(...args)
     }
 
     if (operator === 'quote') {
       const [quoted] = rest
-      return quoted // return as-is without evaluating
+      return quoted
     }
 
-    // fallback: evaluate each element
-    // re-uses the array again.
-
-    for (let index = 0; index < value.length; index++) {
-      const item = value[index]
-      value[index] = evaluate(item, awaits)
+    for (let i = 0; i < value.length; i++) {
+      value[i] = evaluate(value[i], awaits)
     }
+
     return value
   }
 
   if (isPlainObject(value)) {
-    // We muatate the object itself. No need to make a new one.
     for (const key of Object.keys(value)) {
       value[key] = evaluate(value[key], awaits)
     }
@@ -99,23 +91,56 @@ const evaluate = spy('eval', (value, awaits = []) => {
   return value
 })
 
+/**
+ * Default deserializer for leaf nodes.
+ *
+ * @param {string} text
+ * @returns {any}
+ * @public
+ */
 const defaultLeafDeserializer = (text) => JSON.parse(text)
 
-export default (schemaArg, env, deserialize = defaultLeafDeserializer) => {
+/**
+ * Creates a program parser for a given schema and environment.
+ *
+ * The parser:
+ * - resolves references into runtime functions
+ * - deserializes leaf nodes
+ * - collects and executes async awaits
+ * - evaluates AST-like JSON programs
+ *
+ * @param {Array<string | [string, Array]>} schemaArg
+ * @param {Object} env - runtime environment for refs
+ * @param {(text: string) => any} [deserialize=defaultLeafDeserializer]
+ * @returns {(program: string) => any|Promise<any>}
+ * @public
+ */
+export default function Parse (schemaArg, env, deserialize = defaultLeafDeserializer) {
   const schema = flattenSchema(schemaArg)
 
+  /**
+   * Parses and executes a serialized program.
+   *
+   * @param {string} program - JSON encoded program
+   * @returns {any|Promise<any>}
+   * @public
+   */
   return function parse (program) {
     debug('program', program)
     const awaits = []
 
-    // Creates the list of awaits that will resolve in order
-    // and also deserializes the leaves.
+    /**
+     * JSON reviver used during parsing.
+     * Converts encoded operators into runtime structures.
+     *
+     * @param {string} key
+     * @param {any} value
+     * @returns {any}
+     */
     const reviver = spy('revive', (key, value) => {
       if (value === null) return value
 
-      if (!Array.isArray(value)) {
-        return value
-      }
+      if (!Array.isArray(value)) return value
 
       const [operator, ...rest] = value
 
@@ -126,7 +151,6 @@ export default (schemaArg, env, deserialize = defaultLeafDeserializer) => {
 
       if (operator === 'await') {
         const [program] = rest
-
         return ['await', awaits.push(program) - 1]
       }
 
@@ -151,19 +175,17 @@ export default (schemaArg, env, deserialize = defaultLeafDeserializer) => {
     })
 
     const parsed = JSON.parse(program, reviver)
-
     debug('parsed', parsed)
 
     if (awaits.length) {
       debug('awaits', awaits)
 
       return (async function () {
-        for (let index = 0; index < awaits.length; index++) {
-          awaits[index] = await evaluate(awaits[index], awaits)
+        for (let i = 0; i < awaits.length; i++) {
+          awaits[i] = await evaluate(awaits[i], awaits)
         }
 
         debug('awaits(awaited)', awaits)
-
         return evaluate(parsed, awaits)
       })()
     }
