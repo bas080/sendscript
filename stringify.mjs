@@ -105,7 +105,7 @@ function defaultLeafStringify (x) {
  * Creates a stringify function for SendScript AST structures.
  *
  * @param {(value: any) => string} [leafSerializer=strictStringify]
- * @returns {(program: any) => string}
+ * @returns {stringify}
  * @public
  */
 export default function Stringify (leafStringify = defaultLeafStringify) {

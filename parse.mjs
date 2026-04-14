@@ -102,7 +102,6 @@ const defaultLeafParse = (text) => JSON.parse(text)
 
 /**
  * @template Env
- * @typedef {(program: string) => any | Promise<any>} parse
  *
  * Creates a program parser for a given schema and environment.
  *

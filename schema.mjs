@@ -1,6 +1,11 @@
 /**
- * @typedef {string | [string, Schema]} SchemaNode
+ * A single schema node.
  *
+ * @typedef {string | [string, Schema]} SchemaNode
+ * @public
+ */
+
+/**
  * A schema defines the structure of the runtime API tree.
  *
  * - string → leaf node
