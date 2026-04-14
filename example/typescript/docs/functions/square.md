@@ -8,7 +8,7 @@
 
 > **square**(`a`): `number`
 
-Defined in: [math.ts:2](https://github.com/bas080/sendscript/blob/2cf0e7e7ced32258102382e7ff1e3f8e91a2cc77/example/typescript/math.ts#L2)
+Defined in: [math.ts:2](https://github.com/bas080/sendscript/blob/b35009ace9761d32c0c6ef1d1d045bed2ecfe74e/example/typescript/math.ts#L2)
 
 ## Parameters
 

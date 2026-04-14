@@ -15,7 +15,9 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Server](#server)
   * [Client](#client)
 - [Repl](#repl)
-- [Async/Await](#asyncawait)
+- [Promises](#promises)
+  * [.then / .catch](#then--catch)
+  * [await](#await)
 - [TypeScript](#typescript)
 - [Schema and Nested Modules](#schema-and-nested-modules)
   * [Defining a Nested Module](#defining-a-nested-module)
@@ -27,8 +29,6 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Formatting](#formatting)
 - [Changelog](#changelog)
 - [Dependencies](#dependencies)
-- [License](#license)
-- [Roadmap](#roadmap)
 
 <!-- tocstop -->
 
@@ -215,7 +215,20 @@ Sendscript ships with a barebones (no-dependencies) node-repl script. One can ru
 
 > Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
 
-## Async/Await
+## Promises
+
+### .then / .catch
+
+Supported since vs `v2.3`.
+
+```js
+const getOrCreatePost = send(createPost(title).catch(createPost(title)))
+```
+
+You will likely need to define better helpers that makes it safer to handle rejections and work with promises. It is however sensible to have
+this basic behavior for the sendscript DSL and parser.
+
+### await
 
 SendScript supports async/await seamlessly within a single request. This avoids the performance pitfalls of waterfall-style messaging, which can be especially slow on high-latency networks.
 
@@ -429,19 +442,19 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@2.2.0 test
+> sendscript@2.3.0 test
 > tap -R silent
 
 
-> sendscript@2.2.0 test
+> sendscript@2.3.0 test
 > tap report text-summary
 
 
 =============================== Coverage summary ===============================
-Statements   : 100% ( 338/338 )
-Branches     : 100% ( 123/123 )
-Functions    : 100% ( 22/22 )
-Lines        : 100% ( 338/338 )
+Statements   : 100% ( 372/372 )
+Branches     : 100% ( 137/137 )
+Functions    : 100% ( 24/24 )
+Lines        : 100% ( 372/372 )
 ================================================================================
 ```
 
@@ -470,19 +483,6 @@ Check if packages are up to date on release.
 npm outdated && echo 'No outdated packages found'
 ```
 ```
-No outdated packages found
+Package  Current   Wanted   Latest  Location              Depended by
+typedoc  0.28.18  0.28.19  0.28.19  node_modules/typedoc  master
 ```
-
-## License
-
-See the [LICENSE.txt][license] file for details.
-
-## Roadmap
-
-- [ ] Support for simple lambdas to compose functions more easily.
-
-[license]:./LICENSE.txt
-[socket.io]:https://socket.io/
-[changelog]:./CHANGELOG.md
-[auto-changelog]:https://www.npmjs.com/package/auto-changelog
-[typedoc]:https://github.com/TypeStrong/typedoc
