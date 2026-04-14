@@ -395,15 +395,6 @@ const result = parse(json)
 The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous
 and safe from colliding with SendScript operators.
 
-## Tests
-
-Tests with 100% code coverage.
-
-```bash bash
-npm t -- -R silent
-npm t -- report text-summary
-```
-
 ## Changelog
 
 The [changelog][changelog] is generated using the useful
