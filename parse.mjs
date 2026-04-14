@@ -98,9 +98,12 @@ const evaluate = spy('eval', (value, awaits = []) => {
  * @returns {any}
  * @public
  */
-const defaultLeafDeserializer = (text) => JSON.parse(text)
+const defaultLeafParse = (text) => JSON.parse(text)
 
 /**
+ * @template Env
+ * @typedef {(program: string) => any | Promise<any>} parse
+ *
  * Creates a program parser for a given schema and environment.
  *
  * The parser:
@@ -110,12 +113,12 @@ const defaultLeafDeserializer = (text) => JSON.parse(text)
  * - evaluates AST-like JSON programs
  *
  * @param {Array<string | [string, Array]>} schemaArg
- * @param {Object} env - runtime environment for refs
- * @param {(text: string) => any} [deserialize=defaultLeafDeserializer]
- * @returns {(program: string) => any|Promise<any>}
+ * @param {Env} env - runtime environment for refs
+ * @param {(text: string) => any} [leafParse=defaultLeafParse]
+ * @returns {parse}
  * @public
  */
-export default function Parse (schemaArg, env, deserialize = defaultLeafDeserializer) {
+export default function Parse (schemaArg, env, leafParse = defaultLeafParse) {
   const schema = flattenSchema(schemaArg)
 
   /**
@@ -145,7 +148,7 @@ export default function Parse (schemaArg, env, deserialize = defaultLeafDeserial
       const [operator, ...rest] = value
 
       if (operator === 'leaf') {
-        const leafValue = deserialize(rest[0])
+        const leafValue = leafParse(rest[0])
         return leafValue === undefined ? undefinedSentinel : leafValue
       }
 

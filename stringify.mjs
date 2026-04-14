@@ -89,7 +89,7 @@ function transformValue (value, leafSerializer) {
  * @returns {string}
  * @public
  */
-function strictStringify (x) {
+function defaultLeafStringify (x) {
   const typeOf = typeof x
 
   if (typeOf === 'object' || typeOf === 'function' || x === undefined) {
@@ -108,7 +108,7 @@ function strictStringify (x) {
  * @returns {(program: any) => string}
  * @public
  */
-export default function Stringify (leafSerializer = strictStringify) {
+export default function Stringify (leafStringify = defaultLeafStringify) {
   /**
    * Serializes a program into a JSON string representation.
    *
@@ -116,9 +116,7 @@ export default function Stringify (leafSerializer = strictStringify) {
    * @returns {string}
    * @public
    */
-  function stringify (program) {
-    return JSON.stringify(transformValue(program, leafSerializer))
+  return function stringify (program) {
+    return JSON.stringify(transformValue(program, leafStringify))
   }
-
-  return stringify
 }
