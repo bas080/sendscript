@@ -1,9 +1,13 @@
 /**
+ * @typedef {string | [string, Schema]} SchemaNode
+ *
  * A schema defines the structure of the runtime API tree.
  *
  * - string → leaf node
- * - [name, children] → namespace
+ * - [name, children] → namespace node
  *
- * @typedef {Array<string | [string, Array]>} Schema
+ * Schema is recursive: nodes can contain nested schemas.
+ *
+ * @typedef {SchemaNode[]} Schema
  * @public
  */
