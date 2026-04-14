@@ -404,14 +404,6 @@ npm t -- -R silent
 npm t -- report text-summary
 ```
 
-## Formatting
-
-Standard because no config.
-
-```bash bash
-npx standard
-```
-
 ## Changelog
 
 The [changelog][changelog] is generated using the useful
@@ -419,14 +411,6 @@ The [changelog][changelog] is generated using the useful
 
 ```bash bash > /dev/null
 npx auto-changelog -p
-```
-
-## Dependencies
-
-Check if packages are up to date on release.
-
-```bash bash
-npm outdated && echo 'No outdated packages found'
 ```
 
 ## License
