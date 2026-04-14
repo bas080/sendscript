@@ -10,6 +10,7 @@ import {
 const debug = Debug.extend('stringify')
 
 const keywords = ['ref', 'call', 'quote', 'await', 'leaf']
+
 const isKeyword = (v) => keywords.includes(v)
 
 const isPlainObject = (value) => {
@@ -18,26 +19,26 @@ const isPlainObject = (value) => {
   return proto === Object.prototype || proto === null
 }
 
-// Recursively transform a program tree, encoding SendScript operators and leaf values
 function transformValue (value, leafSerializer) {
   debug(value)
 
-  if (value === null) {
-    return null
-  }
+  if (value === null) return null
 
-  // Normalize SendScript wrapper functions (ref, call, await)
+  // unwrap function wrappers (instrumented nodes)
   if (typeof value === 'function' && typeof value.toJSON === 'function') {
     return transformValue(value.toJSON(), leafSerializer)
   }
 
-  // Encode SendScript operators
   if (value && value[ref]) {
     return ['ref', ...value.path]
   }
 
   if (value && value[call]) {
-    return ['call', transformValue(value.ref, leafSerializer), transformValue(value.args, leafSerializer)]
+    return [
+      'call',
+      transformValue(value.ref, leafSerializer),
+      transformValue(value.args, leafSerializer)
+    ]
   }
 
   if (value && value[awaitSymbol]) {
@@ -45,22 +46,27 @@ function transformValue (value, leafSerializer) {
   }
 
   if (value && value[then]) {
-    return ['then', transformValue(value.ref, leafSerializer), transformValue(value.resolve || null, leafSerializer), transformValue(value.reject || null, leafSerializer)]
+    return [
+      'then',
+      transformValue(value.ref, leafSerializer),
+      transformValue(value.resolve || null, leafSerializer),
+      transformValue(value.reject || null, leafSerializer)
+    ]
   }
 
-  // Handle arrays: quote keyword operators, transform other arrays recursively
   if (Array.isArray(value)) {
     const [operator, ...rest] = value
 
     if (isKeyword(operator)) {
-      // Quote reserved keyword strings to preserve them as data
-      return [['quote', operator], ...rest.map((item) => transformValue(item, leafSerializer))]
+      return [
+        ['quote', operator],
+        ...rest.map((item) => transformValue(item, leafSerializer))
+      ]
     }
 
     return value.map((item) => transformValue(item, leafSerializer))
   }
 
-  // Recurse into plain objects
   if (isPlainObject(value)) {
     const result = {}
 
@@ -71,21 +77,45 @@ function transformValue (value, leafSerializer) {
     return result
   }
 
-  // Encode non-JSON leaf values (Date, RegExp, BigInt, etc.)
   return ['leaf', leafSerializer(value)]
 }
 
+/**
+ * Default strict serializer for leaf values.
+ *
+ * Rejects non-JSON-safe values.
+ *
+ * @param {any} x
+ * @returns {string}
+ * @public
+ */
 function strictStringify (x) {
   const typeOf = typeof x
 
   if (typeOf === 'object' || typeOf === 'function' || x === undefined) {
-    throw new SendScriptSerializationError(`Cannot and should not attempt to serialize ${x}`)
+    throw new SendScriptSerializationError(
+      `Cannot and should not attempt to serialize ${x}`
+    )
   }
 
   return JSON.stringify(x)
 }
 
-export default function stringify (leafSerializer = strictStringify) {
+/**
+ * Creates a stringify function for SendScript AST structures.
+ *
+ * @param {(value: any) => string} [leafSerializer=strictStringify]
+ * @returns {(program: any) => string}
+ * @public
+ */
+export default function Stringify (leafSerializer = strictStringify) {
+  /**
+   * Serializes a program into a JSON string representation.
+   *
+   * @param {any} program
+   * @returns {string}
+   * @public
+   */
   function stringify (program) {
     return JSON.stringify(transformValue(program, leafSerializer))
   }

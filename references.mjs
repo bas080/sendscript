@@ -1,6 +1,19 @@
 import { awaitSymbol, call, ref, then, referenceSymbol } from './symbol.mjs'
 
+/**
+ * Creates a callable reference node bound to a path.
+ * Used to build a lazy/instrumented execution structure.
+ *
+ * @param {Array<string>} path - Path representing the function location in schema.
+ * @returns {Function} Reference function with attached control methods (.then, .catch, toJSON).
+ */
 function instrument (path) {
+  /**
+   * Creates a callable reference invocation.
+   *
+   * @param {...any} args - Arguments passed to the call.
+   * @returns {Function} New instrumented reference node.
+   */
   function reference (...args) {
     const called = instrument(path)
 
@@ -13,6 +26,13 @@ function instrument (path) {
     return called
   }
 
+  /**
+   * Internal helper for building promise-like continuation nodes.
+   *
+   * @param {Function|null} resolve
+   * @param {Function|null} reject
+   * @returns {Function} Instrumented continuation node.
+   */
   function dotThen (resolve, reject) {
     const node = instrument(path)
 
@@ -26,18 +46,32 @@ function instrument (path) {
     return node
   }
 
+  /**
+   * Registers rejection handler (promise-style).
+   *
+   * @param {Function} reject
+   * @returns {Function}
+   */
   reference.catch = (reject) => {
     return dotThen(null, reject)
   }
 
+  /**
+   * Handles async chaining or awaiting logic.
+   *
+   * If resolve/reject contain a reference marker, it behaves like a .then chain.
+   * Otherwise it behaves like an await wrapper.
+   *
+   * @param {Function} resolve
+   * @param {Function} reject
+   * @returns {Function|any}
+   */
   reference.then = (resolve, reject) => {
-    // That is how we know if it is an await or a .then call.
     if (resolve?.[referenceSymbol] || reject?.[referenceSymbol]) {
       return dotThen(resolve, reject)
     }
 
     const awaited = instrument(path)
-    // Prevent infinite recur
     delete awaited.then
 
     awaited.toJSON = () => ({
@@ -48,6 +82,11 @@ function instrument (path) {
     return resolve(awaited)
   }
 
+  /**
+   * JSON representation of the reference path node.
+   *
+   * @returns {{ref: symbol, path: Array<string>}}
+   */
   reference.toJSON = () => ({
     [ref]: ref,
     path
@@ -58,17 +97,29 @@ function instrument (path) {
   return reference
 }
 
-export default function module (schema, parentPath = []) {
+/**
+ * Builds a nested API structure from a schema definition.
+ *
+ * Schema supports:
+ * - string => leaf function node
+ * - [name, children] => namespace with nested schema
+ *
+ * @param {Array<string | [string, Array]>} schema
+ * @param {Array<string>} [parentPath=[]]
+ * @returns {Object} Nested instrumented API object
+ *
+ * @throws {Error} If schema format is invalid
+ * @public
+ */
+export default function References (schema, parentPath = []) {
   return schema.reduce((acc, item) => {
     if (typeof item === 'string') {
-      // leaf function
       acc[item] = instrument([...parentPath, item])
     } else if (Array.isArray(item)) {
       const [name, children] = item
 
       if (Array.isArray(children)) {
-        // recurse: children can be strings or [name, children] arrays
-        acc[name] = module(children, [...parentPath, name])
+        acc[name] = References(children, [...parentPath, name])
       } else {
         throw new Error(`Expected children array for namespace "${name}"`)
       }
