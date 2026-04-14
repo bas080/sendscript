@@ -2,6 +2,7 @@ import Debug from './debug.mjs'
 import { SendScriptSerializationError } from './error.mjs'
 import {
   awaitSymbol,
+  then,
   call,
   ref
 } from './symbol.mjs'
@@ -41,6 +42,10 @@ function transformValue (value, leafSerializer) {
 
   if (value && value[awaitSymbol]) {
     return ['await', transformValue(value.ref, leafSerializer)]
+  }
+
+  if (value && value[then]) {
+    return ['then', transformValue(value.ref, leafSerializer), transformValue(value.resolve || null, leafSerializer), transformValue(value.reject || null, leafSerializer)]
   }
 
   // Handle arrays: quote keyword operators, transform other arrays recursively

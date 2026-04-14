@@ -28,11 +28,13 @@ const myModuleOrig = {
   toArray: (...array) => array,
   always: (x) => () => x,
   multiply3: (a) => (b) => (c) => a * b * c,
+  sayHello: x => `hello ${x}`,
   map: (fn) => (array) => array.map(fn),
   filter: (pred) => (array) => array.filter(pred),
   hello: 'world',
   noop: () => {},
   resolve: (x) => Promise.resolve(x),
+  reject: x => Promise.reject(x),
   asyncFn: async () => 'my-async-function',
   instanceOf: (x, t) => x instanceof t,
   asyncAdd: async (a, b) => a + b,
@@ -67,6 +69,7 @@ test('should evaluate basic expressions correctly', async (t) => {
     aPromise,
     asyncAdd,
     resolve,
+    reject,
     delay,
     delayedIdentity,
     noop,
@@ -81,8 +84,26 @@ test('should evaluate basic expressions correctly', async (t) => {
     identity,
     always,
     multiply3,
+    sayHello,
     nested
   } = api
+
+  t.test('supports .then', async t => {
+    t.rejects(run(reject('error')))
+
+    t.equal(await run(reject('error').catch(sayHello)), 'hello error')
+    t.equal(await run(reject('error').then(null, sayHello)), 'hello error')
+
+    t.equal(await run(resolve('value').then(sayHello)), 'hello value')
+    t.equal(await run(resolve('value').then(sayHello, noop)), 'hello value')
+
+    t.end()
+  })
+
+  t.test('resolve and reject callback works for .then', async t => {
+    t.equal(await run(resolve(42).then(multiply3(1)(2))), 84)
+    t.end()
+  })
 
   t.test('await evaluation order matches JS semantics', async (t) => {
     const lorder = []

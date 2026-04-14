@@ -1,4 +1,4 @@
-import { awaitSymbol, call, ref } from './symbol.mjs'
+import { awaitSymbol, call, ref, then, referenceSymbol } from './symbol.mjs'
 
 function instrument (path) {
   function reference (...args) {
@@ -6,7 +6,6 @@ function instrument (path) {
 
     called.toJSON = () => ({
       [call]: call,
-      call: true,
       ref: reference,
       args
     })
@@ -14,13 +13,35 @@ function instrument (path) {
     return called
   }
 
-  reference.then = (resolve) => {
+  function dotThen (resolve, reject) {
+    const node = instrument(path)
+
+    node.toJSON = () => ({
+      [then]: then,
+      ref: reference,
+      resolve,
+      reject
+    })
+
+    return node
+  }
+
+  reference.catch = (reject) => {
+    return dotThen(null, reject)
+  }
+
+  reference.then = (resolve, reject) => {
+    // That is how we know if it is an await or a .then call.
+    if (resolve?.[referenceSymbol] || reject?.[referenceSymbol]) {
+      return dotThen(resolve, reject)
+    }
+
     const awaited = instrument(path)
+    // Prevent infinite recur
     delete awaited.then
 
     awaited.toJSON = () => ({
       [awaitSymbol]: awaitSymbol,
-      await: true,
       ref: reference
     })
 
@@ -29,9 +50,10 @@ function instrument (path) {
 
   reference.toJSON = () => ({
     [ref]: ref,
-    reference: true,
     path
   })
+
+  reference[referenceSymbol] = referenceSymbol
 
   return reference
 }

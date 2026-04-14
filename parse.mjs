@@ -32,8 +32,14 @@ const isPlainObject = (value) => {
   return proto === Object.prototype || proto === null
 }
 
+const spy = (type, fn) => (...args) => {
+  const value = fn(...args)
+  debug(type, args, ' => ', value)
+  return value
+}
+
 // Recursively resolve awaited values in a parsed tree
-const evaluate = (value, awaits = []) => {
+const evaluate = spy('eval', (value, awaits = []) => {
   if (value === undefinedSentinel) return undefined
 
   if (Array.isArray(value)) {
@@ -46,6 +52,11 @@ const evaluate = (value, awaits = []) => {
       //   throw new Error(`Invalid await index: ${index}`);
       // }
       return awaits[index]
+    }
+
+    if (operator === 'then') {
+      const [v, onResolve, onReject] = rest
+      return evaluate(v, awaits).then(evaluate(onResolve, awaits), evaluate(onReject, awaits))
     }
 
     if (operator === 'call') {
@@ -86,13 +97,7 @@ const evaluate = (value, awaits = []) => {
   }
 
   return value
-}
-
-const spy = (fn) => (...args) => {
-  const value = fn(...args)
-  debug(args, ' => ', value)
-  return value
-}
+})
 
 const defaultLeafDeserializer = (text) => JSON.parse(text)
 
@@ -105,7 +110,7 @@ export default (schemaArg, env, deserialize = defaultLeafDeserializer) => {
 
     // Creates the list of awaits that will resolve in order
     // and also deserializes the leaves.
-    const reviver = spy((key, value) => {
+    const reviver = spy('revive', (key, value) => {
       if (value === null) return value
 
       if (!Array.isArray(value)) {
