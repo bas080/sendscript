@@ -15,6 +15,7 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Parse](#parse)
   * [parse](#parse)
   * [References](#references)
+  * [SchemaNode](#schemanode)
   * [Schema](#schema)
   * [defaultLeafStringify](#defaultleafstringify)
   * [Stringify](#stringify)
@@ -172,9 +173,22 @@ Schema supports:
 
 Returns **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Nested instrumented API object
 
+### SchemaNode
+
+A single schema node.
+
+Type: ([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | \[[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String), [Schema](#schema)])
+
 ### Schema
 
-Type: [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<SchemaNode>
+A schema defines the structure of the runtime API tree.
+
+*   string → leaf node
+*   \[name, children] → namespace node
+
+Schema is recursive: nodes can contain nested schemas.
+
+Type: [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[SchemaNode](#schemanode)>
 
 ### defaultLeafStringify
 
@@ -195,6 +209,8 @@ Creates a stringify function for SendScript AST structures.
 #### Parameters
 
 *   `leafStringify`   (optional, default `defaultLeafStringify`)
+
+Returns **[stringify](#stringify)**&#x20;
 
 ### stringify
 
