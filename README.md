@@ -26,9 +26,7 @@ Write JS code that you can run on servers, browsers or other clients.
 - [Leaf Serializer](#leaf-serializer)
   * [Example with superjson](#example-with-superjson)
 - [Tests](#tests)
-- [Formatting](#formatting)
 - [Changelog](#changelog)
-- [Dependencies](#dependencies)
 - [License](#license)
 - [Roadmap](#roadmap)
 
@@ -36,23 +34,25 @@ Write JS code that you can run on servers, browsers or other clients.
 
 ## Introduction
 
-There has been interest in improving APIs by allowing aggregations in a
-single request. Examples include
+There has been interest in improving APIs by allowing aggregations in a single
+request. Examples include
 
-- [JSON-RPC](https://json-rpc.dev/) which allows you to do multiple requests
-  but it does not allow you to compose the return value of one endpoint to be the
+- [JSON-RPC](https://json-rpc.dev/) which allows you to do multiple requests but
+  it does not allow you to compose the return value of one endpoint to be the
   input/arguments of another.
 
-- [GraphQL](https://graphql.org/) is very cool but also introduces a new languages and the
-  tooling that is required to wield it.
+- [GraphQL](https://graphql.org/) is very cool but also introduces a new
+  languages and the tooling that is required to wield it.
 
-What SendScript attempts is to allow for very expressive queries and mutations to be performed
-that read and write like ordinary JS. That means that the queries and complete programs
-that are sent to the server from a client can also just run on the server as is. The only
-limitation being the serialization which by default is limited by JSON and could be extended by
-using more advanced (de)serialization libraries.
+What SendScript attempts is to allow for very expressive queries and mutations
+to be performed that read and write like ordinary JS. That means that the
+queries and complete programs that are sent to the server from a client can also
+just run on the server as is. The only limitation being the serialization which
+by default is limited by JSON and could be extended by using more advanced
+(de)serialization libraries.
 
-SendScript produces an intermediate JSON representation of the program. Let's see what that looks like.
+SendScript produces an intermediate JSON representation of the program. Let's
+see what that looks like.
 
 ```js
 import Stringify from 'sendscript/stringify.mjs'
@@ -91,22 +91,22 @@ console.log(parse(program))
 SendScript does more than a simple function call. It supports function
 composition and even await.
 
-This package is nothing more than the absolute core of sendscript. It
-includes:
+This package is nothing more than the absolute core of sendscript. It includes:
 
 - The `references` function to create stubs to write the programs.
 - `stringify` which takes the program and returns a JSON string.
-- `parse` which takes the `stringify` JSON string and a real module and returns the result.
+- `parse` which takes the `stringify` JSON string and a real module and returns
+  the result.
 
-The naming could use more love and there are many things to solve either in the core or around it.
-Things like supporting more complex (de)serializers, errors and maybe mixing client functions with
-sendscript programs. Contact me if I have piqued your interest.
+The naming could use more love and there are many things to solve either in the
+core or around it. Things like supporting more complex (de)serializers, errors
+and maybe mixing client functions with sendscript programs. Contact me if I have
+piqued your interest.
 
 ---
 
-SendScript leaves it up to you to choose HTTP, web-sockets or any other
-method of communication between servers and clients that best fits your
-needs.
+SendScript leaves it up to you to choose HTTP, web-sockets or any other method
+of communication between servers and clients that best fits your needs.
 
 ## Socket example
 
@@ -120,7 +120,7 @@ We write a simple module.
 // ./example/math.mjs
 
 export const add = (a, b) => a + b
-export const square = a => a * a
+export const square = (a) => a * a
 ```
 
 ### Server
@@ -172,12 +172,10 @@ const stringify = Stringify()
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const send = program => {
+const send = (program) => {
   return new Promise((resolve, reject) => {
     client.emit('message', stringify(program), (error, result) => {
-      error
-        ? reject(error)
-        : resolve(result)
+      error ? reject(error) : resolve(result)
     })
   })
 }
@@ -213,9 +211,11 @@ Result:  100
 
 ## Repl
 
-Sendscript ships with a barebones (no-dependencies) node-repl script. One can run it by simply typing `sendscript` in their console.
+Sendscript ships with a barebones (no-dependencies) node-repl script. One can
+run it by simply typing `sendscript` in their console.
 
-> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printingonly sendscript logs.
+> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for
+> printingonly sendscript logs.
 
 ## Promises
 
@@ -227,27 +227,33 @@ Supported since vs `v2.3`.
 const getOrCreatePost = send(createPost(title).catch(createPost(title)))
 ```
 
-You will likely need to define better helpers that makes it safer to handle rejections and work with promises. It is however sensible to have
-this basic behavior for the sendscript DSL and parser.
+You will likely need to define better helpers that makes it safer to handle
+rejections and work with promises. It is however sensible to have this basic
+behavior for the sendscript DSL and parser.
 
 ### await
 
-SendScript supports async/await seamlessly within a single request. This avoids the performance pitfalls of waterfall-style messaging, which can be especially slow on high-latency networks.
+SendScript supports async/await seamlessly within a single request. This avoids
+the performance pitfalls of waterfall-style messaging, which can be especially
+slow on high-latency networks.
 
-While it's possible to chain promises manually or use utility functions, native async/await support makes your code more readable, modern, and easier to reason about — aligning SendScript with today’s JavaScript best practices.
+While it's possible to chain promises manually or use utility functions, native
+async/await support makes your code more readable, modern, and easier to reason
+about — aligning SendScript with today’s JavaScript best practices.
 
 ```js
 const userId = 'user-123'
 const program = {
   unread: await fetchUnreadMessages(userId),
   emptyTrash: await emptyTrash(userId),
-  archived: await archiveMessages(selectMessages({ old: true }))
+  archived: await archiveMessages(selectMessages({ old: true })),
 }
 
 const result = await send(program)
 ```
 
-This operation is done in a single round-trip. The result is an object with the defined properties and returned values.
+This operation is done in a single round-trip. The result is an object with the
+defined properties and returned values.
 
 ## TypeScript
 
@@ -300,15 +306,16 @@ npx typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./e
 
 You can see the docs [here](./example/typescript/docs/globals.md)
 
-> [!NOTE]
-> Although type coercion on the client side can improve the development
-> experience, it does not represent the actual type.
-> Values are subject to serialization and deserialization.
-
+> [!NOTE] Although type coercion on the client side can improve the development
+> experience, it does not represent the actual type. Values are subject to
+> serialization and deserialization.
 
 ## Schema and Nested Modules
 
-Sendscript allows you to define your API as a **nested object of functions**, making it easy to organize your DSL into modules and submodules. Each function is instrumented so that when serialized, it produces a structured reference that can be safely sent and executed elsewhere.
+Sendscript allows you to define your API as a **nested object of functions**,
+making it easy to organize your DSL into modules and submodules. Each function
+is instrumented so that when serialized, it produces a structured reference that
+can be safely sent and executed elsewhere.
 
 ### Defining a Nested Module
 
@@ -340,17 +347,13 @@ Functions are referenced via their **path in the module tree**:
 ```js
 const { math, vector } = references(schema)
 
-math.add(
-  1,
-  vector.length(
-    vector.multiply([1,2], 3)
-  )
-)
+math.add(1, vector.length(vector.multiply([1, 2], 3)))
 ```
 
 ## Validation (using Zod)
 
-SendScript focuses on program serialization and execution. For runtime input validation, you can use [Zod](https://zod.dev).
+SendScript focuses on program serialization and execution. For runtime input
+validation, you can use [Zod](https://zod.dev).
 
 ### Validating structured input
 
@@ -358,7 +361,7 @@ SendScript focuses on program serialization and execution. For runtime input val
 const userSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
-  roles: z.array(z.string())
+  roles: z.array(z.string()),
 })
 
 export function createUser(user) {
@@ -376,13 +379,19 @@ export function createUser(user) {
 
 ## Leaf Serializer
 
-By default, SendScript uses JSON for serialization, which limits support to primitives and plain objects/arrays. To support richer JavaScript types like `Date`, `RegExp`, `BigInt`, `Map`, `Set`, and `undefined`, you can provide custom serialization functions.
+By default, SendScript uses JSON for serialization, which limits support to
+primitives and plain objects/arrays. To support richer JavaScript types like
+`Date`, `RegExp`, `BigInt`, `Map`, `Set`, and `undefined`, you can provide
+custom serialization functions.
 
-The `stringify` function accepts an optional `leafSerializer` parameter, and `parse` accepts an optional `leafDeserializer` parameter. These functions control how non-SendScript values (leaves) are encoded and decoded.
+The `stringify` function accepts an optional `leafSerializer` parameter, and
+`parse` accepts an optional `leafDeserializer` parameter. These functions
+control how non-SendScript values (leaves) are encoded and decoded.
 
 ### Example with superjson
 
-Here's how to use [superjson](https://github.com/blitz-js/superjson) to support extended types:
+Here's how to use [superjson](https://github.com/blitz-js/superjson) to support
+extended types:
 
 ```js
 import SuperJSON from 'superjson'
@@ -412,7 +421,10 @@ const program = {
   pattern: /foo/gi,
   count: BigInt('9007199254740992'),
   items: new Set([1, 2, 3]),
-  mapping: new Map([['a', 1], ['b', 2]])
+  mapping: new Map([
+    ['a', 1],
+    ['b', 2],
+  ]),
 }
 
 // Serialize with custom leaf serializer
@@ -422,8 +434,8 @@ const json = stringify(processData(program))
 const env = {
   processData: (data) => ({
     success: true,
-    received: data
-  })
+    received: data,
+  }),
 }
 
 // Parse with custom leaf deserializer
@@ -432,7 +444,8 @@ const parse = Parse(schema, env, leadDeserializer)
 const result = parse(json)
 ```
 
-The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous and safe from colliding with SendScript operators.
+The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous
+and safe from colliding with SendScript operators.
 
 ## Tests
 
@@ -444,11 +457,11 @@ npm t -- report text-summary
 ```
 ```
 
-> sendscript@2.3.1 test
+> sendscript@2.3.2 test
 > tap -R silent
 
 
-> sendscript@2.3.1 test
+> sendscript@2.3.2 test
 > tap report text-summary
 
 
@@ -460,14 +473,6 @@ Lines        : 100% ( 372/372 )
 ================================================================================
 ```
 
-## Formatting
-
-Standard because no config.
-
-```bash
-npx standard
-```
-
 ## Changelog
 
 The [changelog][changelog] is generated using the useful
@@ -475,17 +480,6 @@ The [changelog][changelog] is generated using the useful
 
 ```bash
 npx auto-changelog -p
-```
-
-## Dependencies
-
-Check if packages are up to date on release.
-
-```bash
-npm outdated && echo 'No outdated packages found'
-```
-```
-No outdated packages found
 ```
 
 ## License
@@ -496,8 +490,8 @@ See the [LICENSE.txt][license] file for details.
 
 - [ ] Support for simple lambdas to compose functions more easily.
 
-[license]:./LICENSE.txt
-[socket.io]:https://socket.io/
-[changelog]:./CHANGELOG.md
-[auto-changelog]:https://www.npmjs.com/package/auto-changelog
-[typedoc]:https://github.com/TypeStrong/typedoc
+[license]: ./LICENSE.txt
+[socket.io]: https://socket.io/
+[changelog]: ./CHANGELOG.md
+[auto-changelog]: https://www.npmjs.com/package/auto-changelog
+[typedoc]: https://github.com/TypeStrong/typedoc

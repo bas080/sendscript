@@ -11,12 +11,10 @@ const stringify = Stringify()
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const send = program => {
+const send = (program) => {
   return new Promise((resolve, reject) => {
     client.emit('message', stringify(program), (error, result) => {
-      error
-        ? reject(error)
-        : resolve(result)
+      error ? reject(error) : resolve(result)
     })
   })
 }
