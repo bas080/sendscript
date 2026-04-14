@@ -112,14 +112,14 @@ const defaultLeafParse = (text) => JSON.parse(text)
  * - collects and executes async awaits
  * - evaluates AST-like JSON programs
  *
- * @param {Array<string | [string, Array]>} schemaArg
+ * @param {Schema}  schema
  * @param {Env} env - runtime environment for refs
  * @param {(text: string) => any} [leafParse=defaultLeafParse]
  * @returns {parse}
  * @public
  */
-export default function Parse (schemaArg, env, leafParse = defaultLeafParse) {
-  const schema = flattenSchema(schemaArg)
+export default function Parse (schema, env, leafParse = defaultLeafParse) {
+  const flatSchema = flattenSchema(schema)
 
   /**
    * Parses and executes a serialized program.
@@ -160,7 +160,7 @@ export default function Parse (schemaArg, env, leafParse = defaultLeafParse) {
       if (operator === 'ref') {
         const path = rest
         let current = env
-        let schemaCurrent = schema
+        let schemaCurrent = flatSchema
 
         for (const segment of path) {
           if (schemaCurrent && Object.hasOwn(schemaCurrent, segment)) {

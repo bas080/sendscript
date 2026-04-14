@@ -104,7 +104,7 @@ function instrument (path) {
  * - string => leaf function node
  * - [name, children] => namespace with nested schema
  *
- * @param {Array<string | [string, Array]>} schema
+ * @param {Schema} schema
  * @param {Array<string>} [parentPath=[]]
  * @returns {Object} Nested instrumented API object
  *
