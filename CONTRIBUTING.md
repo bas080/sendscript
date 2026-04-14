@@ -1,6 +1,5 @@
 # Contributing
 
-
 For the README.mz examples to work we need sendscript to be linked.
 
 ```bash bash > /dev/null
@@ -11,6 +10,12 @@ npm link sendscript
 cd ./example
 npm ci
 npm link sendscript
+```
+
+Check if markdown is correctly formatted.
+
+```bash bash
+npx prettier --check --parser markdown ./README.mz ./CONTRIBUTING.md
 ```
 
 Generate the README from the mz file.
