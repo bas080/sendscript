@@ -15,6 +15,7 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Parse](#parse)
   * [parse](#parse)
   * [References](#references)
+  * [Schema](#schema)
   * [defaultLeafStringify](#defaultleafstringify)
   * [Stringify](#stringify)
   * [stringify](#stringify)
@@ -135,7 +136,7 @@ Returns **any**&#x20;
 
 #### Parameters
 
-*   `schemaArg` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | \[[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String), [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)])>**&#x20;
+*   `schema` **[Schema](#schema)**&#x20;
 *   `env` **Env** runtime environment for refs
 *   `leafParse`   (optional, default `defaultLeafParse`)
 
@@ -162,7 +163,7 @@ Schema supports:
 
 #### Parameters
 
-*   `schema` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | \[[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String), [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)])>**&#x20;
+*   `schema` **[Schema](#schema)**&#x20;
 *   `parentPath` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)>**  (optional, default `[]`)
 
 <!---->
@@ -170,6 +171,15 @@ Schema supports:
 *   Throws **[Error](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error)** If schema format is invalid
 
 Returns **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Nested instrumented API object
+
+### Schema
+
+A schema defines the structure of the runtime API tree.
+
+*   string → leaf node
+*   \[name, children] → namespace
+
+Type: [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | \[[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String), [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)])>
 
 ### defaultLeafStringify
 
