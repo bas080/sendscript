@@ -39,58 +39,6 @@ const spy = (type, fn) => (...args) => {
   return value
 }
 
-const evaluate = spy('eval', (value, awaits = []) => {
-  if (value === undefinedSentinel) return undefined
-
-  if (Array.isArray(value)) {
-    const [operator, ...rest] = value
-
-    if (operator === 'await') {
-      const [index] = rest
-      return awaits[index]
-    }
-
-    if (operator === 'then') {
-      const [v, onResolve, onReject] = rest
-      return evaluate(v, awaits).then(
-        evaluate(onResolve, awaits),
-        evaluate(onReject, awaits)
-      )
-    }
-
-    if (operator === 'call') {
-      let [fn, args] = rest
-      fn = evaluate(fn, awaits)
-
-      for (let i = 0; i < args.length; i++) {
-        args[i] = evaluate(args[i], awaits)
-      }
-
-      return fn(...args)
-    }
-
-    if (operator === 'quote') {
-      const [quoted] = rest
-      return quoted
-    }
-
-    for (let i = 0; i < value.length; i++) {
-      value[i] = evaluate(value[i], awaits)
-    }
-
-    return value
-  }
-
-  if (isPlainObject(value)) {
-    for (const key of Object.keys(value)) {
-      value[key] = evaluate(value[key], awaits)
-    }
-    return value
-  }
-
-  return value
-})
-
 /**
  * Default deserializer for leaf nodes.
  *
@@ -130,6 +78,76 @@ export default function Parse (schema, env, leafParse = defaultLeafParse) {
   return function parse (program) {
     debug('program', program)
     const awaits = []
+
+    const evaluateOuter = spy('eval', (env, value) => {
+      const evaluate = evaluateOuter.bind(null, env)
+
+      if (value === undefinedSentinel) return undefined
+
+      if (Array.isArray(value)) {
+        const [operator, ...rest] = value
+
+        if (operator === 'await') {
+          const [index] = rest
+          return awaits[index]
+        }
+
+        if (operator === 'then') {
+          const [v, onResolve, onReject] = rest
+          return evaluate(v).then(
+            evaluate(onResolve),
+            evaluate(onReject)
+          )
+        }
+
+        if (operator === 'fn') {
+          const [argIds, body] = [...rest]
+
+          return (...args) => {
+            const newEnv = Object.create(env)
+
+            argIds.forEach((id, index) => {
+              newEnv[id] = args[index]
+            })
+
+            return evaluateOuter(newEnv, body)
+          }
+        }
+
+        if (operator === 'arg') {
+          const [id] = rest
+
+          return env[id]
+        }
+
+        if (operator === 'call') {
+          let [fn, args] = rest
+          fn = evaluate(fn)
+
+          return fn(...args.map(evaluate))
+        }
+
+        if (operator === 'quote') {
+          const [quoted] = rest
+          return quoted
+        }
+
+        for (let i = 0; i < value.length; i++) {
+          value[i] = evaluate(value[i])
+        }
+
+        return value
+      }
+
+      if (isPlainObject(value)) {
+        for (const key of Object.keys(value)) {
+          value[key] = evaluate(value[key])
+        }
+        return value
+      }
+
+      return value
+    })
 
     /**
      * JSON reviver used during parsing.
@@ -184,14 +202,14 @@ export default function Parse (schema, env, leafParse = defaultLeafParse) {
 
       return (async function () {
         for (let i = 0; i < awaits.length; i++) {
-          awaits[i] = await evaluate(awaits[i], awaits)
+          awaits[i] = await evaluateOuter({}, awaits[i])
         }
 
         debug('awaits(awaited)', awaits)
-        return evaluate(parsed, awaits)
+        return evaluateOuter({}, parsed)
       })()
     }
 
-    return evaluate(parsed)
+    return evaluateOuter({}, parsed)
   }
 }

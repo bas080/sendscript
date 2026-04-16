@@ -187,6 +187,24 @@ run it by simply typing `sendscript` in their console.
 > Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for
 > printingonly sendscript logs.
 
+## Functions
+
+SendScript as of `v2.4` supports functions to do basic templating. It does not
+support async functions and will throw an error when you define one.
+
+Under the hood the function is called when it is being parsed. Make sure you
+understand what you are doing when mixing client and server functions.
+
+```js
+map((a) => add(a, 1))([1, 2, 3]))
+```
+
+It also supports nested functions.
+
+```js
+map(call)(map((a) => () => add(a, 1))([1, 2, 3]))
+```
+
 ## Promises
 
 ### .then / .catch

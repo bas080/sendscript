@@ -34,6 +34,7 @@ const myModuleOrig = {
   hello: 'world',
   noop: () => {},
   resolve: (x) => Promise.resolve(x),
+  call: (fn, ...args) => fn(...args),
   reject: x => Promise.reject(x),
   asyncFn: async () => 'my-async-function',
   instanceOf: (x, t) => x instanceof t,
@@ -85,14 +86,58 @@ test('should evaluate basic expressions correctly', async (t) => {
     always,
     multiply3,
     sayHello,
+    call,
     nested
   } = api
 
+  t.test('throws when async fn is provided', async t => {
+    t.throws(() => run(identity(async () => {})))
+    t.end()
+  })
+
+  t.test('supports fns with arguments', async t => {
+    t.same(run(map((a) => add(a, 1))([1, 2, 3])), [2, 3, 4])
+    t.end()
+  })
+
+  t.test('nested fns with arguments', async t => {
+    t.same(run(
+      map(call)(
+        map((a) => () => add(a, 1))([1, 2, 3])
+      )), [2, 3, 4])
+    t.end()
+  })
+
+  t.test('supports fns without arguments', async t => {
+    t.equal(run(() => add(1, 2))(), 3)
+    t.equal(run(always(() => 42)()()), 42)
+    t.equal(run(always(x => add(x, 42))()(2)), 44)
+    t.end()
+  })
+
+  t.test('supports binding reference functions on client', async t => {
+    const plusOne = add.bind(null, 1)
+
+    t.equal(run(plusOne(1)), 2)
+    t.equal(await run(resolve(1).then(plusOne)), 2)
+
+    // Even this works.
+    t.equal(await run(resolve(1).then(v => plusOne(v))), 2)
+
+    t.end()
+  })
+
   t.test('supports .then', async t => {
+    const something = 30
+
     t.rejects(run(reject('error')))
 
     t.equal(await run(reject('error').catch(sayHello)), 'hello error')
     t.equal(await run(reject('error').then(null, sayHello)), 'hello error')
+
+    // .then with fns just works and I do not know why.
+    t.equal(await run(resolve(32).then(() => add(something, 1))), 31)
+    t.equal(await run(resolve(32).then(value => add(something, value))), 62)
 
     t.equal(await run(resolve('value').then(sayHello)), 'hello value')
     t.equal(await run(resolve('value').then(sayHello, noop)), 'hello value')
