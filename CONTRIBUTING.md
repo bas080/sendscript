@@ -1,5 +1,17 @@
 # Contributing
 
+The pre-push git hook.
+
+```bash cat - > .git/hooks/pre-push
+#!/usr/bin/env bash
+
+set -xeuo pipefail
+
+npm t
+npx standard
+npx prettier -c --parser markdown *.mz
+```
+
 For the README.mz examples to work we need sendscript to be linked.
 
 ```bash bash > /dev/null
