@@ -1,6 +1,6 @@
 # SendScript
 
-Write JS code that you can run on servers, browsers or other clients.
+RPC and no-build with composable function calls in a single payload.
 
 [![NPM](https://img.shields.io/npm/v/sendscript?color=blue\&style=flat-square)](https://www.npmjs.com/package/sendscript)
 [![100% Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square)](#tests)
@@ -25,10 +25,12 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Server](#server)
   * [Client](#client)
 - [Repl](#repl)
-- [Functions](#functions)
 - [Promises](#promises)
   * [.then / .catch](#then--catch)
   * [await](#await)
+- [Promises](#promises-1)
+  * [.then / .catch](#then--catch-1)
+  * [await](#await-1)
 - [TypeScript](#typescript)
 - [Schema and Nested Modules](#schema-and-nested-modules)
   * [Defining a Nested Module](#defining-a-nested-module)
@@ -36,6 +38,12 @@ Write JS code that you can run on servers, browsers or other clients.
   * [Validating structured input](#validating-structured-input)
 - [Leaf Serializer](#leaf-serializer)
   * [Example with superjson](#example-with-superjson)
+- [Limitations](#limitations)
+  * [Chaining APIs](#chaining-apis)
+  * [Callbacks](#callbacks)
+  * [Error handling](#error-handling)
+- [Tests](#tests)
+- [Formatting](#formatting)
 - [Changelog](#changelog)
 - [License](#license)
 - [Issues](#issues)
@@ -121,7 +129,7 @@ piqued your interest.
 
 ### defaultLeafParse
 
-[parse.mjs:49-49](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/parse.mjs#L49-L49 "Source code on GitHub")
+[parse.mjs:49-49](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/parse.mjs#L49-L49 "Source code on GitHub")
 
 Default deserializer for leaf nodes.
 
@@ -133,7 +141,7 @@ Returns **any**&#x20;
 
 ### Parse
 
-[parse.mjs:68-215](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/parse.mjs#L68-L215 "Source code on GitHub")
+[parse.mjs:68-215](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/parse.mjs#L68-L215 "Source code on GitHub")
 
 #### Parameters
 
@@ -145,7 +153,7 @@ Returns **[parse](#parse)**&#x20;
 
 ### parse
 
-[parse.mjs:78-214](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/parse.mjs#L78-L214 "Source code on GitHub")
+[parse.mjs:78-214](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/parse.mjs#L78-L214 "Source code on GitHub")
 
 Parses and executes a serialized program.
 
@@ -157,7 +165,7 @@ Returns **(any | [Promise](https://developer.mozilla.org/docs/Web/JavaScript/Ref
 
 ### References
 
-[references.mjs:109-127](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/references.mjs#L109-L127 "Source code on GitHub")
+[references.mjs:109-127](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/references.mjs#L109-L127 "Source code on GitHub")
 
 Builds a nested API structure from a schema definition.
 
@@ -174,7 +182,7 @@ Returns **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/G
 
 ### SchemaNode
 
-[schema.mjs:1-19](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/schema.mjs#L1-L6 "Source code on GitHub")
+[schema.mjs:1-19](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/schema.mjs#L1-L6 "Source code on GitHub")
 
 A single schema node.
 
@@ -182,7 +190,7 @@ Type: ([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Glob
 
 ### Schema
 
-[schema.mjs:1-19](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/schema.mjs#L8-L18 "Source code on GitHub")
+[schema.mjs:1-19](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/schema.mjs#L8-L18 "Source code on GitHub")
 
 A schema defines the structure of the runtime API tree.
 
@@ -195,7 +203,7 @@ Type: [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global
 
 ### defaultLeafStringify
 
-[stringify.mjs:37-47](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/stringify.mjs#L37-L47 "Source code on GitHub")
+[stringify.mjs:37-47](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/stringify.mjs#L37-L47 "Source code on GitHub")
 
 Default strict serializer for leaf values.
 
@@ -209,7 +217,7 @@ Returns **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/G
 
 ### Stringify
 
-[stringify.mjs:56-157](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/stringify.mjs#L56-L157 "Source code on GitHub")
+[stringify.mjs:56-157](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/stringify.mjs#L56-L157 "Source code on GitHub")
 
 Creates a stringify function for SendScript AST structures.
 
@@ -221,7 +229,7 @@ Returns **[stringify](#stringify)**&#x20;
 
 ### stringify
 
-[stringify.mjs:64-156](https://github.com/bas080/sendscript/blob/5249a85a08b10485f0d64058fd2c8bcaae84edda/stringify.mjs#L64-L156 "Source code on GitHub")
+[stringify.mjs:64-156](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/stringify.mjs#L64-L156 "Source code on GitHub")
 
 Serializes a program into a JSON string representation.
 
@@ -336,13 +344,27 @@ pkill sendscript
 
 ## Repl
 
-Sendscript ships with a barebones (no-dependencies) node-repl script. One can
+Sendscript ships with a bare-bones (no-dependencies) node-repl script. One can
 run it by simply typing `sendscript` in their console.
 
-> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for
-> printingonly sendscript logs.
+> Use the `DEBUG='*'` to enable all logs or `DEBUG='sendscript:*'` for printing
+> only sendscript logs.
 
-## Functions
+## Promises
+
+### .then / .catch
+
+Supported since vs `v2.3`.
+
+```js
+const getOrCreatePost = send(createPost(title).catch(createPost(title)))
+```
+
+You will likely need to define better helpers that makes it safer to handle
+rejections and work with promises. It is however sensible to have this basic
+behavior for the sendscript DSL and parser.
+
+### await
 
 SendScript as of `v2.4` supports functions to do basic templating. It does not
 support async functions and will throw an error when you define one.
@@ -584,13 +606,100 @@ const env = {
 }
 
 // Parse with custom leaf deserializer
-const parse = Parse(schema, env, leadDeserializer)
+const parse = Parse(schema, env, leafDeserializer)
 
 const result = parse(json)
 ```
 
 The leaf wrapper format is `['leaf', serializedPayload]`, making it unambiguous
 and safe from colliding with SendScript operators.
+
+## Limitations
+
+The stubs the `references` function returns are limited in the way they can be
+used. This has to do with the fact that they are to be serialized.
+
+### Chaining APIs
+
+Currently you cannot do chaining APIs. `lib().doThis().doThat()`. It likely is
+possible to implement but will require more extensive schemas and obviously more
+code to create the AST.
+
+### Callbacks
+
+Although it is possible to mix client and server functions, it works very
+different to ordinary functions. Client functions can be used but should be seen
+as a templating tool to make sendscript programs; just like one would use
+JavaScript with react templates. `items.map(deleteItem)` would return an array
+of sendscript function calls which can be given to sendscript's parse.
+
+Client functions cannot be called by sendscript functions (as of yet) since we
+cannot serialize client functions. No work has been done to have the server send
+back intermediate values to perform client function calls or by performing
+smaller sendscript program payloads that are passed to the client. Very
+interesting stuff to look into. You can achieve this now but it looks less clean
+because you have to do `send` calls which is a bit manual.
+
+```js
+await send(updateUser(id, merge(await send(getUser(id)), { ...newValues })))
+```
+
+It might be interesting to allow configuration to create references that will
+trigger a send whenever await is called. That would remove the ability to create
+a single payload whenever using await. You can then write the above in the
+following manner.
+
+```js
+await updateUser(id, merge(await getUser(id), { ...newValues }))
+```
+
+Possible footgun is that updateUser is only performed when awaited (.then is
+called). This lazy behavior can trip users. This footgun could be resolved by
+checking if any outstanding work exists at the end of a step or the beginning of
+a new step.
+
+### Error handling
+
+Sendscript does not have builtin tools to handle errors. You can write your own
+utilities for that or use things like \[Ramda's tryCatch]\[tryCatch]. This will
+likely never be supported as JS try catch does not have a return value. It might
+make sense to wrap everything that can throw in promises which is easy to do
+with async functions.
+
+## Tests
+
+Tests with 100% code coverage.
+
+```bash
+npm t -- -R silent
+npm t -- report text-summary
+```
+
+```
+
+> sendscript@2.4.1 test
+> tap -R silent
+
+
+> sendscript@2.4.1 test
+> tap report text-summary
+
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 523/523 )
+Branches     : 100% ( 153/153 )
+Functions    : 100% ( 25/25 )
+Lines        : 100% ( 523/523 )
+================================================================================
+```
+
+## Formatting
+
+Standard because no config.
+
+```bash
+npx standard
+```
 
 ## Changelog
 
