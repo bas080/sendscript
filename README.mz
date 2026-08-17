@@ -27,6 +27,34 @@ Install SendScript from npm:
 npm install sendscript
 ```
 
+## Quick Start
+
+Here's the simplest example to get started with SendScript:
+
+```js
+import Stringify from 'sendscript/stringify.mjs'
+import Parse from 'sendscript/parse.mjs'
+import references from 'sendscript/references.mjs'
+
+// Define your functions
+const functions = {
+  greet: (name) => `Hello, ${name}!`
+}
+
+// Create client-side stubs
+const { greet } = references(['greet'])
+
+// Serialize a program on the client
+const stringify = Stringify()
+const program = stringify(greet('World'))
+
+// Parse and execute on the server
+const parse = Parse(['greet'], functions)
+const result = parse(program) // "Hello, World!"
+```
+
+This demonstrates the core concept: write a program on the client, serialize it to JSON, send it to the server, and execute it exactly as written.
+
 ## Introduction
 
 There has been interest in improving APIs by allowing aggregations in a single
