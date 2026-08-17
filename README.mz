@@ -9,13 +9,16 @@ Serialize and execute composable JavaScript function calls with JSON.
 
 ## Features
 
-- **Composable function calls** - Combine multiple functions into a single request
-- **Write ordinary JavaScript** - Programs serialize to JSON and execute as written
+- **Composable function calls** - Combine multiple functions into a single
+  request
+- **Write ordinary JavaScript** - Programs serialize to JSON and execute as
+  written
 - **Type-safe** - Works great with TypeScript for client-side type checking
 - **Zero dependencies** - Lightweight core library
 - **Async/await support** - Seamless async operations within a single payload
 - **Custom serializers** - Support for Date, Map, Set, BigInt, and more
-- **Transport agnostic** - Use HTTP, WebSockets, or any other communication method
+- **Transport agnostic** - Use HTTP, WebSockets, or any other communication
+  method
 
 <!-- toc -->
 
@@ -38,7 +41,7 @@ import references from 'sendscript/references.mjs'
 
 // Define your functions
 const functions = {
-  greet: (name) => `Hello, ${name}!`
+  greet: (name) => `Hello, ${name}!`,
 }
 
 // Create client-side stubs
@@ -53,7 +56,8 @@ const parse = Parse(['greet'], functions)
 const result = parse(program) // "Hello, World!"
 ```
 
-This demonstrates the core concept: write a program on the client, serialize it to JSON, send it to the server, and execute it exactly as written.
+This demonstrates the core concept: write a program on the client, serialize it
+to JSON, send it to the server, and execute it exactly as written.
 
 ## Introduction
 
@@ -69,7 +73,10 @@ request. Examples include
 
 ## Why SendScript?
 
-Unlike JSON-RPC (which doesn't support function composition) or GraphQL (which requires learning a new language), SendScript lets you write ordinary JavaScript/TypeScript that gets serialized and executed on the server exactly as written.
+Unlike JSON-RPC (which doesn't support function composition) or GraphQL (which
+requires learning a new language), SendScript lets you write ordinary
+JavaScript/TypeScript that gets serialized and executed on the server exactly as
+written.
 
 ## How It Works
 
@@ -121,12 +128,12 @@ This package is nothing more than the absolute core of sendscript. It includes:
 - `parse` which takes the `stringify` JSON string and a real module and returns
   the result.
 
-> **Note:** SendScript works in Node.js and browsers. The core library is 
-> framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any 
-> other communication method that suits your needs.
+> **Note:** SendScript works in Node.js and browsers. The core library is
+> framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any other
+> communication method that suits your needs.
 
-Future enhancements may include support for more complex (de)serializers, 
-improved error handling, and deeper integration of client functions with 
+Future enhancements may include support for more complex (de)serializers,
+improved error handling, and deeper integration of client functions with
 SendScript programs. Contributions and feedback are welcome.
 
 ## Socket example
