@@ -291,7 +291,7 @@ Using SendScript with TypeScript enables **type-safe client-side code**. Your cl
 
 Define your API as a TypeScript module on the server:
 
-```ts bash
+```bash|ts bash
 cat ./example/typescript/math.ts
 ```
 
@@ -299,20 +299,20 @@ cat ./example/typescript/math.ts
 
 Create a client-side file that mirrors your server types using the `as typeof` casting pattern:
 
-```ts bash
+```bash|ts bash
 cat ./example/typescript/math.client.ts
 ```
 
 The `as typeof mathTypes` type assertion gives your client-side references the exact same types as your server module. This means:
-- ✅ Full IDE autocomplete for function names and parameters
-- ✅ Compile-time type checking - catch errors before runtime
-- ✅ Your client code looks identical to regular JavaScript calls
+- Full IDE autocomplete for function names and parameters
+- Compile-time type checking - catch errors before runtime
+- Your client code looks identical to regular JavaScript calls
 
 ### Using Typed References
 
 Now on your client, you have complete type safety:
 
-```ts bash
+```bash|ts bash
 cat ./example/typescript/client.ts
 ```
 
