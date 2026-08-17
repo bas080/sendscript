@@ -7,7 +7,7 @@ import { awaitSymbol, call, ref, then, referenceSymbol } from './symbol.mjs'
  * @param {Array<string>} path - Path representing the function location in schema.
  * @returns {Function} Reference function with attached control methods (.then, .catch, toJSON).
  */
-function instrument (path) {
+function instrument (path, onAwait = null) {
   /**
    * Creates a callable reference invocation.
    *
@@ -15,7 +15,7 @@ function instrument (path) {
    * @returns {Function} New instrumented reference node.
    */
   function reference (...args) {
-    const called = instrument(path)
+    const called = instrument(path, onAwait)
 
     called.toJSON = () => ({
       [call]: call,
@@ -71,13 +71,17 @@ function instrument (path) {
       return dotThen(resolve, reject)
     }
 
-    const awaited = instrument(path)
+    const awaited = instrument(path, onAwait)
     delete awaited.then
 
     awaited.toJSON = () => ({
       [awaitSymbol]: awaitSymbol,
       ref: reference
     })
+
+    if (typeof onAwait === 'function') {
+      return resolve(onAwait(awaited))
+    }
 
     return resolve(awaited)
   }
@@ -106,15 +110,15 @@ function instrument (path) {
  * @throws {Error} If schema format is invalid
  * @public
  */
-export default function References (schema, parentPath = []) {
+export default function References (schema, onAwait = null, parentPath = []) {
   return schema.reduce((acc, item) => {
     if (typeof item === 'string') {
-      acc[item] = instrument([...parentPath, item])
+      acc[item] = instrument([...parentPath, item], onAwait)
     } else if (Array.isArray(item)) {
       const [name, children] = item
 
       if (Array.isArray(children)) {
-        acc[name] = References(children, [...parentPath, name])
+        acc[name] = References(children, onAwait, [...parentPath, name])
       } else {
         throw new Error(`Expected children array for namespace "${name}"`)
       }
