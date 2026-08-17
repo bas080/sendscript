@@ -67,6 +67,12 @@ request. Examples include
 - [GraphQL](https://graphql.org/) is very cool but also introduces a new
   language and the tooling that is required to wield it.
 
+## Why SendScript?
+
+Unlike JSON-RPC (which doesn't support function composition) or GraphQL (which requires learning a new language), SendScript lets you write ordinary JavaScript/TypeScript that gets serialized and executed on the server exactly as written.
+
+## How It Works
+
 What SendScript attempts is to allow for very expressive queries and mutations
 to be performed that read and write like ordinary JS. That means that the
 queries and complete programs that are sent to the server from a client can also
