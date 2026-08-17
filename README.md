@@ -36,6 +36,10 @@ Serialize and execute composable JavaScript function calls with JSON.
   * [.then / .catch](#then--catch)
   * [await](#await)
 - [TypeScript](#typescript)
+  * [Server-Side Module](#server-side-module)
+  * [Client-Side Type Stub](#client-side-type-stub)
+  * [Using Typed References](#using-typed-references)
+  * [Generating API Documentation](#generating-api-documentation)
 - [Schema and Nested Modules](#schema-and-nested-modules)
   * [Defining a Nested Module](#defining-a-nested-module)
 - [Validation (using Zod)](#validation-using-zod)
@@ -326,37 +330,84 @@ defined properties and returned values.
 
 ## TypeScript
 
-There is a good use-case to write a module in TypeScript.
+Using SendScript with TypeScript enables **type-safe client-side code**. Your
+client can have full IDE autocomplete and compile-time type checking when
+calling server functions.
 
-1. Obviously the module would have the benefits that TypeScript offers when
-   coding.
-2. You can use tools like [typedoc][typedoc] to generate docs from your types to
-   share with consumers of your API.
-3. You can use the types of the module to coerce your client to adopt the
-   module's type.
+### Server-Side Module
 
-Let's say we have this module which we use on the server.
+Define your API as a TypeScript module on the server:
 
 ```bash
 cat ./example/typescript/math.ts
 ```
 ```ts
-export const add = (a: number, b: number) => a + b
-export const square = (a: number) => a * a
+/**
+ * Server-side math module with typed functions
+ * These functions will be called from the client through SendScript
+ */
+
+export const add = (a: number, b: number): number => a + b
+
+export const square = (a: number): number => a * a
+
 ```
 
-We can then coerce the types of the instrumented stubs.
+### Client-Side Type Stub
+
+Create a client-side file that mirrors your server types using the `as typeof`
+casting pattern:
+
+```bash
+cat ./example/typescript/math.client.ts
+```
+```ts
+/**
+ * Client-side type-safe stubs for the math API
+ * 
+ * This file creates typed references that mirror the server's functions.
+ * The 'as typeof mathTypes' cast gives us full TypeScript support and IDE autocomplete.
+ */
+
+import type * as mathTypes from './math.ts'
+import references from 'sendscript/references.mjs'
+
+// Create type-safe stubs - this tells TypeScript that 'add' and 'square' 
+// have the same signatures as the server functions
+export default references(['add', 'square']) as typeof mathTypes
+
+```
+
+The `as typeof mathTypes` type assertion gives your client-side references the
+exact same types as your server module. This means:
+
+- Full IDE autocomplete for function names and parameters
+- Compile-time type checking - catch errors before runtime
+- Your client code looks identical to regular JavaScript calls
+
+### Using Typed References
+
+Now on your client, you have complete type safety:
 
 ```bash
 cat ./example/typescript/client.ts
 ```
 ```ts
-import math  from './math.client.ts'
+/**
+ * Client-side usage with type-safe SendScript
+ */
+
+import math from './math.client.ts'
 import Stringify from 'sendscript/stringify.mjs'
 
 const stringify = Stringify()
 
-// The return type of this function matches the type passed as the return of the program.
+/**
+ * Send a SendScript program to the server
+ * 
+ * TypeScript knows that the return type matches the program's return type.
+ * In this case, square(add(1, 2)) returns a number, so T is number.
+ */
 async function send<T>(program: T): Promise<T> {
   return (await fetch('/api', {
     method: 'POST',
@@ -364,20 +415,41 @@ async function send<T>(program: T): Promise<T> {
   })).json()
 }
 
-send(square(add(1, 2)))
+// TypeScript provides full autocomplete for math.add and math.square
+// It knows they take numbers and return numbers
+const result = await send(math.square(math.add(1, 2)))
+console.log(result) // 9
+
 ```
 
-We'll also generate the docs for this module.
+TypeScript knows the exact parameter types and return types for every function
+call.
+
+### Generating API Documentation
+
+You can use [typedoc][typedoc] to automatically generate documentation from your
+TypeScript types:
 
 ```bash
-npx typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./example/typescript/math.ts
+npx typedoc --plugin typedoc-plugin-markdown --out ./docs ./example/typescript/math.ts
+```
+```
+[96m[info][0m Loaded plugin typedoc-plugin-markdown
+[96m[info][0m markdown generated at ./docs
 ```
 
-You can see the docs [here](./example/typescript/docs/globals.md)
+This generates markdown docs that can be shared with API consumers. See the
+[generated docs](./example/typescript/docs/globals.md).
 
-> [!NOTE] Although type coercion on the client side can improve the development
-> experience, it does not represent the actual type. Values are subject to
-> serialization and deserialization.
+> [!IMPORTANT] **Type vs. Runtime Values**
+>
+> Type casting on the client side improves the development experience, but
+> remember:
+>
+> - The actual serialized JSON may differ from the static types
+> - Runtime values depend on serialization/deserialization
+> - Always validate user input on the server using schema validation (e.g., Zod)
+> - Use the types as a contract, not a guarantee
 
 ## Schema and Nested Modules
 
