@@ -19,6 +19,14 @@ Serialize and execute composable JavaScript function calls with JSON.
 
 <!-- toc -->
 
+## Installation
+
+Install SendScript from npm:
+
+```bash
+npm install sendscript
+```
+
 ## Introduction
 
 There has been interest in improving APIs by allowing aggregations in a single
