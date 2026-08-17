@@ -203,38 +203,6 @@ behavior for the sendscript DSL and parser.
 
 ### await
 
-SendScript as of `v2.4` supports functions to do basic templating. It does not
-support async functions and will throw an error when you define one.
-
-Under the hood the function is called when it is being parsed. Make sure you
-understand what you are doing when mixing client and server functions.
-
-```js
-map((a) => add(a, 1))([1, 2, 3]))
-```
-
-It also supports nested functions.
-
-```js
-map(call)(map((a) => () => add(a, 1))([1, 2, 3]))
-```
-
-## Promises
-
-### .then / .catch
-
-Supported since vs `v2.3`.
-
-```js
-const getOrCreatePost = send(createPost(title).catch(createPost(title)))
-```
-
-You will likely need to define better helpers that makes it safer to handle
-rejections and work with promises. It is however sensible to have this basic
-behavior for the sendscript DSL and parser.
-
-### await
-
 SendScript supports async/await seamlessly within a single request. This avoids
 the performance pitfalls of waterfall-style messaging, which can be especially
 slow on high-latency networks.
