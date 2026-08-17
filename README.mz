@@ -129,10 +129,6 @@ Future enhancements may include support for more complex (de)serializers,
 improved error handling, and deeper integration of client functions with 
 SendScript programs. Contributions and feedback are welcome.
 
-## Reference
-
-<!-- Reference -->
-
 ## Socket example
 
 SendScript leaves it up to you to choose HTTP, web-sockets or any other method
