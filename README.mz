@@ -261,27 +261,40 @@ behavior for the sendscript DSL and parser.
 
 ### await
 
-SendScript supports async/await seamlessly within a single request. This avoids
-the performance pitfalls of waterfall-style messaging, which can be especially
-slow on high-latency networks.
-
-While it's possible to chain promises manually or use utility functions, native
-async/await support makes your code more readable, modern, and easier to reason
-about — aligning SendScript with today’s JavaScript best practices.
+By default, `await api.someMethod(...)` still creates a SendScript await stub
+and keeps the result serializable with `stringify()`. It does not automatically
+send anything over the network.
 
 ```js
-const userId = 'user-123'
-const program = {
-  unread: await fetchUnreadMessages(userId),
-  emptyTrash: await emptyTrash(userId),
-  archived: await archiveMessages(selectMessages({ old: true })),
-}
+const api = references(['add'])
+const program = api.add(1, 2)
 
-const result = await send(program)
+Stringify()(program)
+// => "[\"call\",[\"ref\",\"add\"],[1,2]]"
 ```
 
-This operation is done in a single round-trip. The result is an object with the
-defined properties and returned values.
+If you want native `await` to cross the transport boundary, pass an `onAwait`
+handler when creating the references:
+
+```js
+import Stringify from 'sendscript/stringify.mjs'
+import references from 'sendscript/references.mjs'
+
+const stringify = Stringify()
+
+const api = references(['add'], (program) => {
+  return fetch('/api', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: stringify(program),
+  }).then((response) => response.json())
+})
+
+const result = await api.add(1, 2)
+```
+
+The callback receives the generated SendScript program, and you decide how it is
+transported or executed.
 
 ## TypeScript
 
@@ -496,36 +509,21 @@ code to create the AST.
 
 ### Callbacks
 
-Although it is possible to mix client and server functions, it works very
-different to ordinary functions. Client functions can be used but should be seen
-as a templating tool to make sendscript programs; just like one would use
-JavaScript with react templates. `items.map(deleteItem)` would return an array
-of sendscript function calls which can be given to sendscript's parse.
-
-Client functions cannot be called by sendscript functions (as of yet) since we
-cannot serialize client functions. No work has been done to have the server send
-back intermediate values to perform client function calls or by performing
-smaller sendscript program payloads that are passed to the client. Very
-interesting stuff to look into. You can achieve this now but it looks less clean
-because you have to do `send` calls which is a bit manual.
+SendScript supports basic callback-style usage, such as passing a function as an
+argument or using a callback to flip arguments into the generated program.
 
 ```js
-await send(updateUser(id, merge(await send(getUser(id)), { ...newValues })))
+const api = references(['map', 'add'])
+
+const result = api.map((value) => api.add(value, 1))([1, 2, 3])
 ```
 
-It might be interesting to allow configuration to create references that will
-trigger a send whenever await is called. That would remove the ability to create
-a single payload whenever using await. You can then write the above in the
-following manner.
+This is meant for composing SendScript programs, not for executing arbitrary
+client-side logic at runtime.
 
-```js
-await updateUser(id, merge(await getUser(id), { ...newValues }))
-```
-
-Possible footgun is that updateUser is only performed when awaited (.then is
-called). This lazy behavior can trip users. This footgun could be resolved by
-checking if any outstanding work exists at the end of a step or the beginning of
-a new step.
+> [!WARNING] Mixing client and server functions can be confusing, because the
+> callback may be used to build a program rather than execute immediately. Keep
+> callback logic simple and deterministic.
 
 ### Error handling
 
