@@ -121,6 +121,10 @@ This package is nothing more than the absolute core of sendscript. It includes:
 - `parse` which takes the `stringify` JSON string and a real module and returns
   the result.
 
+> **Note:** SendScript works in Node.js and browsers. The core library is 
+> framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any 
+> other communication method that suits your needs.
+
 Future enhancements may include support for more complex (de)serializers, 
 improved error handling, and deeper integration of client functions with 
 SendScript programs. Contributions and feedback are welcome.
