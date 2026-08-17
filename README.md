@@ -1,25 +1,32 @@
 # SendScript
 
-RPC and no-build with composable function calls in a single payload.
+Serialize and execute composable JavaScript function calls with JSON.
 
-[![NPM](https://img.shields.io/npm/v/sendscript?color=blue\&style=flat-square)](https://www.npmjs.com/package/sendscript)
+[![NPM](https://img.shields.io/npm/v/sendscript?color=blue&style=flat-square)](https://www.npmjs.com/package/sendscript)
 [![100% Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square)](#tests)
 [![Standard Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square)](https://standardjs.com)
-[![License](https://img.shields.io/npm/l/sendscript?color=brightgreen\&style=flat-square)](./LICENSE.txt)
+[![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
+
+## Features
+
+- **Composable function calls** - Combine multiple functions into a single
+  request
+- **Write ordinary JavaScript** - Programs serialize to JSON and execute as
+  written
+- **Type-safe** - Works great with TypeScript for client-side type checking
+- **Zero dependencies** - Lightweight core library
+- **Async/await support** - Seamless async operations within a single payload
+- **Custom serializers** - Support for Date, Map, Set, BigInt, and more
+- **Transport agnostic** - Use HTTP, WebSockets, or any other communication
+  method
 
 <!-- toc -->
 
+- [Installation](#installation)
+- [Quick Start](#quick-start)
 - [Introduction](#introduction)
-- [Reference](#reference)
-  * [defaultLeafParse](#defaultleafparse)
-  * [Parse](#parse)
-  * [parse](#parse)
-  * [References](#references)
-  * [SchemaNode](#schemanode)
-  * [Schema](#schema)
-  * [defaultLeafStringify](#defaultleafstringify)
-  * [Stringify](#stringify)
-  * [stringify](#stringify)
+- [Why SendScript?](#why-sendscript)
+- [How It Works](#how-it-works)
 - [Socket example](#socket-example)
   * [Module](#module)
   * [Server](#server)
@@ -28,9 +35,6 @@ RPC and no-build with composable function calls in a single payload.
 - [Promises](#promises)
   * [.then / .catch](#then--catch)
   * [await](#await)
-- [Promises](#promises-1)
-  * [.then / .catch](#then--catch-1)
-  * [await](#await-1)
 - [TypeScript](#typescript)
 - [Schema and Nested Modules](#schema-and-nested-modules)
   * [Defining a Nested Module](#defining-a-nested-module)
@@ -50,17 +54,63 @@ RPC and no-build with composable function calls in a single payload.
 
 <!-- tocstop -->
 
+## Installation
+
+Install SendScript from npm:
+
+```bash
+npm install sendscript
+```
+
+## Quick Start
+
+Here's the simplest example to get started with SendScript:
+
+```js
+import Stringify from 'sendscript/stringify.mjs'
+import Parse from 'sendscript/parse.mjs'
+import references from 'sendscript/references.mjs'
+
+// Define your functions
+const functions = {
+  greet: (name) => `Hello, ${name}!`,
+}
+
+// Create client-side stubs
+const { greet } = references(['greet'])
+
+// Serialize a program on the client
+const stringify = Stringify()
+const program = stringify(greet('World'))
+
+// Parse and execute on the server
+const parse = Parse(['greet'], functions)
+const result = parse(program) // "Hello, World!"
+```
+
+This demonstrates the core concept: write a program on the client, serialize it
+to JSON, send it to the server, and execute it exactly as written.
+
 ## Introduction
 
 There has been interest in improving APIs by allowing aggregations in a single
 request. Examples include
 
-*   [JSON-RPC](https://json-rpc.dev/) which allows you to do multiple requests but
-    it does not allow you to compose the return value of one endpoint to be the
-    input/arguments of another.
+- [JSON-RPC](https://json-rpc.dev/) which allows you to do multiple requests but
+  it does not allow you to compose the return value of one endpoint to be the
+  input/arguments of another.
 
-*   [GraphQL](https://graphql.org/) is very cool but also introduces a new
-    languages and the tooling that is required to wield it.
+- [GraphQL](https://graphql.org/) is very cool but also introduces a new
+  language and the tooling that is required to wield it.
+
+## Why SendScript?
+
+Unlike JSON-RPC (which doesn't support function composition) or GraphQL (which
+requires learning a new language), SendScript lets you write ordinary
+JavaScript/TypeScript that gets serialized and executed on the server exactly as
+written.
+
+## How It Works
 
 What SendScript attempts is to allow for very expressive queries and mutations
 to be performed that read and write like ordinary JS. That means that the
@@ -81,7 +131,6 @@ const stringify = Stringify()
 
 console.log(stringify(add(1,2)))
 ```
-
 ```json
 ["call",["ref","add"],[["leaf","1"],["leaf","2"]]]
 ```
@@ -103,7 +152,6 @@ const program = '["call",["ref","add"],[1,2]]'
 
 console.log(parse(program))
 ```
-
 ```json
 3
 ```
@@ -113,131 +161,18 @@ composition and even await.
 
 This package is nothing more than the absolute core of sendscript. It includes:
 
-*   The `references` function to create stubs to write the programs.
-*   `stringify` which takes the program and returns a JSON string.
-*   `parse` which takes the `stringify` JSON string and a real module and returns
-    the result.
+- The `references` function to create stubs to write the programs.
+- `stringify` which takes the program and returns a JSON string.
+- `parse` which takes the `stringify` JSON string and a real module and returns
+  the result.
 
-The naming could use more love and there are many things to solve either in the
-core or around it. Things like supporting more complex (de)serializers, errors
-and maybe mixing client functions with sendscript programs. Contact me if I have
-piqued your interest.
+> **Note:** SendScript works in Node.js and browsers. The core library is
+> framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any other
+> communication method that suits your needs.
 
-## Reference
-
-<!-- Generated by documentation.js. Update this documentation by updating the source code. -->
-
-### defaultLeafParse
-
-[parse.mjs:49-49](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/parse.mjs#L49-L49 "Source code on GitHub")
-
-Default deserializer for leaf nodes.
-
-#### Parameters
-
-*   `text` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)**&#x20;
-
-Returns **any**&#x20;
-
-### Parse
-
-[parse.mjs:68-215](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/parse.mjs#L68-L215 "Source code on GitHub")
-
-#### Parameters
-
-*   `schema` **[Schema](#schema)**&#x20;
-*   `env` **Env** runtime environment for refs
-*   `leafParse`   (optional, default `defaultLeafParse`)
-
-Returns **[parse](#parse)**&#x20;
-
-### parse
-
-[parse.mjs:78-214](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/parse.mjs#L78-L214 "Source code on GitHub")
-
-Parses and executes a serialized program.
-
-#### Parameters
-
-*   `program` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** JSON encoded program
-
-Returns **(any | [Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<any>)**&#x20;
-
-### References
-
-[references.mjs:109-127](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/references.mjs#L109-L127 "Source code on GitHub")
-
-Builds a nested API structure from a schema definition.
-
-#### Parameters
-
-*   `schema` **[Schema](#schema)**&#x20;
-*   `parentPath`   (optional, default `[]`)
-
-<!---->
-
-*   Throws **[Error](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Error)** If schema format is invalid
-
-Returns **[Object](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object)** Nested instrumented API object
-
-### SchemaNode
-
-[schema.mjs:1-19](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/schema.mjs#L1-L6 "Source code on GitHub")
-
-A single schema node.
-
-Type: ([string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String) | \[[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String), [Schema](#schema)])
-
-### Schema
-
-[schema.mjs:1-19](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/schema.mjs#L8-L18 "Source code on GitHub")
-
-A schema defines the structure of the runtime API tree.
-
-*   string → leaf node
-*   \[name, children] → namespace node
-
-Schema is recursive: nodes can contain nested schemas.
-
-Type: [Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)<[SchemaNode](#schemanode)>
-
-### defaultLeafStringify
-
-[stringify.mjs:37-47](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/stringify.mjs#L37-L47 "Source code on GitHub")
-
-Default strict serializer for leaf values.
-
-Rejects non-JSON-safe values.
-
-#### Parameters
-
-*   `x` **any**&#x20;
-
-Returns **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)**&#x20;
-
-### Stringify
-
-[stringify.mjs:56-157](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/stringify.mjs#L56-L157 "Source code on GitHub")
-
-Creates a stringify function for SendScript AST structures.
-
-#### Parameters
-
-*   `leafStringify`   (optional, default `defaultLeafStringify`)
-
-Returns **[stringify](#stringify)**&#x20;
-
-### stringify
-
-[stringify.mjs:64-156](https://github.com/bas080/sendscript/blob/3f1041020e00331ff30ffb5f972738dbaf7a50f3/stringify.mjs#L64-L156 "Source code on GitHub")
-
-Serializes a program into a JSON string representation.
-
-#### Parameters
-
-*   `program` **any**&#x20;
-
-Returns **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)**&#x20;
+Future enhancements may include support for more complex (de)serializers,
+improved error handling, and deeper integration of client functions with
+SendScript programs. Contributions and feedback are welcome.
 
 ## Socket example
 
@@ -259,7 +194,7 @@ export const square = (a) => a * a
 
 ### Server
 
-Here a socket.io server that runs SendScript programs.
+Here's a socket.io server that runs SendScript programs.
 
 ```js
 // ./example/server.socket.io.mjs
@@ -339,8 +274,9 @@ node ./example/client.socket.io.mjs
 
 pkill sendscript
 ```
-
-    Result:  100
+```
+Result:  100
+```
 
 ## Repl
 
@@ -354,39 +290,7 @@ run it by simply typing `sendscript` in their console.
 
 ### .then / .catch
 
-Supported since vs `v2.3`.
-
-```js
-const getOrCreatePost = send(createPost(title).catch(createPost(title)))
-```
-
-You will likely need to define better helpers that makes it safer to handle
-rejections and work with promises. It is however sensible to have this basic
-behavior for the sendscript DSL and parser.
-
-### await
-
-SendScript as of `v2.4` supports functions to do basic templating. It does not
-support async functions and will throw an error when you define one.
-
-Under the hood the function is called when it is being parsed. Make sure you
-understand what you are doing when mixing client and server functions.
-
-```js
-map((a) => add(a, 1))([1, 2, 3]))
-```
-
-It also supports nested functions.
-
-```js
-map(call)(map((a) => () => add(a, 1))([1, 2, 3]))
-```
-
-## Promises
-
-### .then / .catch
-
-Supported since vs `v2.3`.
+Supported since `v2.3`.
 
 ```js
 const getOrCreatePost = send(createPost(title).catch(createPost(title)))
@@ -424,19 +328,18 @@ defined properties and returned values.
 
 There is a good use-case to write a module in TypeScript.
 
-1.  Obviously the module would have the benefits that TypeScript offers when
-    coding.
-2.  You can use tools like [typedoc][typedoc] to generate docs from your types to
-    share with consumers of your API.
-3.  You can use the types of the module to coerce your client to adopt the
-    module's type.
+1. Obviously the module would have the benefits that TypeScript offers when
+   coding.
+2. You can use tools like [typedoc][typedoc] to generate docs from your types to
+   share with consumers of your API.
+3. You can use the types of the module to coerce your client to adopt the
+   module's type.
 
 Let's say we have this module which we use on the server.
 
 ```bash
 cat ./example/typescript/math.ts
 ```
-
 ```ts
 export const add = (a: number, b: number) => a + b
 export const square = (a: number) => a * a
@@ -447,7 +350,6 @@ We can then coerce the types of the instrumented stubs.
 ```bash
 cat ./example/typescript/client.ts
 ```
-
 ```ts
 import math  from './math.client.ts'
 import Stringify from 'sendscript/stringify.mjs'
@@ -473,7 +375,7 @@ npx typedoc --plugin typedoc-plugin-markdown --out ./example/typescript/docs ./e
 
 You can see the docs [here](./example/typescript/docs/globals.md)
 
-> \[!NOTE] Although type coercion on the client side can improve the development
+> [!NOTE] Although type coercion on the client side can improve the development
 > experience, it does not represent the actual type. Values are subject to
 > serialization and deserialization.
 
@@ -540,9 +442,9 @@ export function createUser(user) {
 
 **Benefits**:
 
-*   Ensures arguments match expected types and shapes.
-*   Throws structured errors that can be propagated to clients.
-*   Works with TypeScript for automatic type inference.
+- Ensures arguments match expected types and shapes.
+- Throws structured errors that can be propagated to clients.
+- Works with TypeScript for automatic type inference.
 
 ## Leaf Serializer
 
@@ -661,7 +563,7 @@ a new step.
 ### Error handling
 
 Sendscript does not have builtin tools to handle errors. You can write your own
-utilities for that or use things like \[Ramda's tryCatch]\[tryCatch]. This will
+utilities for that or use things like [Ramda's tryCatch][tryCatch]. This will
 likely never be supported as JS try catch does not have a return value. It might
 make sense to wrap everything that can throw in promises which is easy to do
 with async functions.
@@ -674,22 +576,13 @@ Tests with 100% code coverage.
 npm t -- -R silent
 npm t -- report text-summary
 ```
-
 ```
 
-> sendscript@2.4.1 test
-> tap -R silent
-
-
-> sendscript@2.4.1 test
-> tap report text-summary
-
-
 =============================== Coverage summary ===============================
-Statements   : 100% ( 523/523 )
-Branches     : 100% ( 153/153 )
-Functions    : 100% ( 25/25 )
-Lines        : 100% ( 523/523 )
+Statements   : 100% ( 512/512 )
+Branches     : 100% ( 147/147 )
+Functions    : 100% ( 23/23 )
+Lines        : 100% ( 512/512 )
 ================================================================================
 ```
 
@@ -719,13 +612,8 @@ See the [LICENSE.txt][license] file for details.
 See [issues][issues] for roadmap and known bugs.
 
 [license]: ./LICENSE.txt
-
 [socket.io]: https://socket.io/
-
 [changelog]: ./CHANGELOG.md
-
 [auto-changelog]: https://www.npmjs.com/package/auto-changelog
-
 [typedoc]: https://github.com/TypeStrong/typedoc
-
 [issues]: https://github.com/bas080/sendscript/issues
