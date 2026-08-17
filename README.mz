@@ -291,22 +291,16 @@ Using SendScript with TypeScript enables **type-safe client-side code**. Your cl
 
 Define your API as a TypeScript module on the server:
 
-```ts
-// math.ts (server-side)
-export const add = (a: number, b: number) => a + b
-export const square = (a: number) => a * a
+```ts bash
+cat ./example/typescript/math.ts
 ```
 
 ### Client-Side Type Stub
 
-Create a client-side file that mirrors your server types:
+Create a client-side file that mirrors your server types using the `as typeof` casting pattern:
 
-```ts
-// math.client.ts (client-side)
-import type * as mathTypes from './math.ts'
-import references from 'sendscript/references.mjs'
-
-export default references(['add', 'square']) as typeof mathTypes
+```ts bash
+cat ./example/typescript/math.client.ts
 ```
 
 The `as typeof mathTypes` type assertion gives your client-side references the exact same types as your server module. This means:
@@ -318,29 +312,21 @@ The `as typeof mathTypes` type assertion gives your client-side references the e
 
 Now on your client, you have complete type safety:
 
-```ts
-// client.ts
-import math from './math.client.ts'
-import Stringify from 'sendscript/stringify.mjs'
-
-const stringify = Stringify()
-
-// TypeScript knows these functions take numbers and return numbers
-const program = math.square(math.add(1, 2))
-
-// IDE provides autocomplete and type hints
-const result = stringify(program)
+```ts bash
+cat ./example/typescript/client.ts
 ```
+
+TypeScript knows the exact parameter types and return types for every function call.
 
 ### Generating API Documentation
 
 You can use [typedoc][typedoc] to automatically generate documentation from your TypeScript types:
 
-```bash
-npx typedoc --plugin typedoc-plugin-markdown --out ./docs ./math.ts
+```bash bash
+npx typedoc --plugin typedoc-plugin-markdown --out ./docs ./example/typescript/math.ts
 ```
 
-This generates markdown docs that can be shared with API consumers.
+This generates markdown docs that can be shared with API consumers. See the [generated docs](./example/typescript/docs/globals.md).
 
 > [!IMPORTANT] **Type vs. Runtime Values**
 > 
