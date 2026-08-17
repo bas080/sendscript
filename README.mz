@@ -69,10 +69,9 @@ This package is nothing more than the absolute core of sendscript. It includes:
 - `parse` which takes the `stringify` JSON string and a real module and returns
   the result.
 
-The naming could use more love and there are many things to solve either in the
-core or around it. Things like supporting more complex (de)serializers, errors
-and maybe mixing client functions with sendscript programs. Contact me if I have
-piqued your interest.
+Future enhancements may include support for more complex (de)serializers, 
+improved error handling, and deeper integration of client functions with 
+SendScript programs. Contributions and feedback are welcome.
 
 ## Reference
 
