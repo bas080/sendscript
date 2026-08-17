@@ -1,11 +1,21 @@
 # SendScript
 
-RPC and no-build with composable function calls in a single payload.
+Serialize and execute composable JavaScript function calls with JSON.
 
 [![NPM](https://img.shields.io/npm/v/sendscript?color=blue&style=flat-square)](https://www.npmjs.com/package/sendscript)
 [![100% Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square)](#tests)
 [![Standard Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square)](https://standardjs.com)
 [![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
+
+## Features
+
+- **Composable function calls** - Combine multiple functions into a single request
+- **Write ordinary JavaScript** - Programs serialize to JSON and execute as written
+- **Type-safe** - Works great with TypeScript for client-side type checking
+- **Zero dependencies** - Lightweight core library
+- **Async/await support** - Seamless async operations within a single payload
+- **Custom serializers** - Support for Date, Map, Set, BigInt, and more
+- **Transport agnostic** - Use HTTP, WebSockets, or any other communication method
 
 <!-- toc -->
 
