@@ -98,7 +98,7 @@ export const square = (a) => a * a
 
 ### Server
 
-Here a socket.io server that runs SendScript programs.
+Here's a socket.io server that runs SendScript programs.
 
 ```js cat - > ./example/server.socket.io.mjs
 // ./example/server.socket.io.mjs
