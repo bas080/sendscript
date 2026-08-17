@@ -19,7 +19,7 @@ request. Examples include
   input/arguments of another.
 
 - [GraphQL](https://graphql.org/) is very cool but also introduces a new
-  languages and the tooling that is required to wield it.
+  language and the tooling that is required to wield it.
 
 What SendScript attempts is to allow for very expressive queries and mutations
 to be performed that read and write like ordinary JS. That means that the
