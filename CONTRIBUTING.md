@@ -52,8 +52,6 @@ Generate the README from the mz file.
 ```bash bash
 markatzea ./README.mz | tee ./README.md
 
-npx documentation readme schema.mjs references.mjs stringify.mjs parse.mjs -s Reference --github --a public --markdown-toc false
-
 npx markdown-toc --maxdepth 3 -i README.md
 
 git add *.md ./example
