@@ -1,0 +1,25 @@
+{
+  "name": "sendscript",
+  "version": "2.5.0",
+  "description": "RPC and no-build with composable function calls in a single payload.",
+  "exports": {
+    "./parse": "./src/parse.ts",
+    "./stringify": "./src/stringify.ts",
+    "./references": "./src/references.ts",
+    "./symbol": "./src/symbol.ts",
+    "./error": "./src/error.ts",
+    "./debug": "./src/debug.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "imports": {
+    "npm:debug": "npm:debug@^4.4.3"
+  },
+  "tasks": {
+    "test": "deno test --allow-env --allow-read --allow-write src/",
+    "test:deno": "deno test --allow-env --allow-read --allow-write"
+  },
+  "compilerOptions": {
+    "lib": ["es2020", "dom"],
+    "target": "es2020"
+  }
+}
