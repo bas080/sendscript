@@ -6,6 +6,7 @@ Serialize and execute composable JavaScript function calls with JSON.
 [![100% Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square)](#tests)
 [![Standard Code Style](https://img.shields.io/badge/code_style-standard-brightgreen.svg?style=flat-square)](https://standardjs.com)
 [![License](https://img.shields.io/npm/l/sendscript?color=brightgreen&style=flat-square)](./LICENSE.txt)
+[![Stand with Palestine](https://img.shields.io/badge/🇵🇸%20%20Stand%20With%20Palestine-007A3D?style=flat-square&color=brightgreen)](https://www.islamic-relief.org.uk/giving/appeals/palestine/)
 
 ## Features
 
@@ -647,6 +648,14 @@ npm t -- -R silent
 npm t -- report text-summary
 ```
 ```
+
+> sendscript@2.5.1 test
+> tap -R silent
+
+
+> sendscript@2.5.1 test
+> tap report text-summary
+
 
 =============================== Coverage summary ===============================
 Statements   : 100% ( 516/516 )
