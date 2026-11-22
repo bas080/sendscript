@@ -26,11 +26,17 @@ const isPlainObject = (value: unknown): boolean => {
 }
 
 /**
+ * Serializer for leaf values. Use a custom serializer such as superjson to
+ * support types JSON does not handle natively.
+ */
+export type LeafStringify = (value: unknown) => string
+
+/**
  * Default strict serializer for leaf values.
  *
  * Rejects non-JSON-safe values.
  */
-export function defaultLeafStringify (x: unknown): string {
+export const defaultLeafStringify: LeafStringify = (x) => {
   const typeOf = typeof x
 
   if (typeOf === 'object' || typeOf === 'function' || x === undefined) {
@@ -45,7 +51,7 @@ export function defaultLeafStringify (x: unknown): string {
 /**
  * Creates a stringify function for SendScript AST structures.
  */
-export default function Stringify (leafStringify: (value: unknown) => string = defaultLeafStringify) {
+export default function Stringify (leafStringify: LeafStringify = defaultLeafStringify) {
   /**
    * Serializes a program into a JSON string representation.
    */

@@ -98,35 +98,38 @@ function instrument (path: string[], onAwait: OnAwait = null): Reference {
   return reference
 }
 
-export interface ReferencesTree {
-  [key: string]: Reference | ReferencesTree
-}
-
 /**
  * Builds a nested API structure from a schema definition.
  *
+ * Pass a type argument describing your server module to get typed stubs:
+ *
+ *   references<typeof myModule>(['add', 'square'])
+ *
  * @throws {Error} If schema format is invalid
  */
-export default function References (
+export default function References<R = Record<string, any>> (
   schema: Schema,
   onAwait: OnAwait = null,
   parentPath: string[] = []
-): Record<string, any> {
-  return schema.reduce<Record<string, any>>((acc, item) => {
-    if (typeof item === 'string') {
-      acc[item] = instrument([...parentPath, item], onAwait)
-    } else if (Array.isArray(item)) {
-      const [name, children] = item
+): R {
+  const collect = (children: Schema, path: string[]): Record<string, any> =>
+    children.reduce<Record<string, any>>((acc, item) => {
+      if (typeof item === 'string') {
+        acc[item] = instrument([...path, item], onAwait)
+      } else if (Array.isArray(item)) {
+        const [name, subSchema] = item
 
-      if (Array.isArray(children)) {
-        acc[name] = References(children, onAwait, [...parentPath, name])
+        if (!Array.isArray(subSchema)) {
+          throw new Error(`Expected children array for namespace "${name}"`)
+        }
+
+        acc[name] = collect(subSchema, [...path, name])
       } else {
-        throw new Error(`Expected children array for namespace "${name}"`)
+        throw new Error('Schema items must be strings or [name, children] arrays')
       }
-    } else {
-      throw new Error('Schema items must be strings or [name, children] arrays')
-    }
 
-    return acc
-  }, {})
+      return acc
+    }, {})
+
+  return collect(schema, parentPath) as R
 }

@@ -14,10 +14,10 @@ const stringify = Stringify()
  * In this case, square(add(1, 2)) returns a number, so T is number.
  */
 async function send<T>(program: T): Promise<T> {
-  return (await fetch('/api', {
+  return (await (await fetch('/api', {
     method: 'POST',
     body: stringify(program)
-  })).json()
+  })).json()) as T
 }
 
 // TypeScript provides full autocomplete for math.add and math.square

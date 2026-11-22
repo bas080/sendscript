@@ -1,14 +1,13 @@
 /**
  * Client-side type-safe stubs for the math API
- * 
- * This file creates typed references that mirror the server's functions.
- * The 'as typeof mathTypes' cast gives us full TypeScript support and IDE autocomplete.
+ *
+ * Pass your server module types as a type argument to get full TypeScript
+ * support and IDE autocomplete.
  */
 
 import type * as mathTypes from './math.ts'
 import references from 'sendscript/references.ts'
 
-// Create type-safe stubs - this tells TypeScript that 'add' and 'square' 
+// Create type-safe stubs - this tells TypeScript that 'add' and 'square'
 // have the same signatures as the server functions
-export default references(['add', 'square']) as typeof mathTypes
-
+export default references<typeof mathTypes>(['add', 'square'])

@@ -3,9 +3,16 @@ import { SendScriptReferenceError } from './error.ts'
 import type { Schema } from './schema.ts'
 
 /**
+ * Deserializer for leaf nodes. Converts serialized leaf text back into a
+ * runtime value. Use a custom deserializer such as superjson to support
+ * types JSON does not handle natively.
+ */
+export type LeafParse = (text: string) => unknown
+
+/**
  * Default deserializer for leaf nodes.
  */
-export const defaultLeafParse = (text: string): unknown => JSON.parse(text)
+export const defaultLeafParse: LeafParse = (text) => JSON.parse(text)
 
 function flattenSchema (schema: Schema): Record<string, any> {
   const obj: Record<string, any> = {}
@@ -57,7 +64,7 @@ const spy = (type: string, fn: (...args: any[]) => any) => (...args: any[]) => {
 export default function Parse (
   schema: Schema,
   env: unknown,
-  leafParse: (text: string) => unknown = defaultLeafParse
+  leafParse: LeafParse = defaultLeafParse
 ): (program: string) => any {
   const flatSchema = flattenSchema(schema)
 
