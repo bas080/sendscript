@@ -22,6 +22,11 @@ async function send<T>(program: T): Promise<T> {
 
 // TypeScript provides full autocomplete for math.add and math.square
 // It knows they take numbers and return numbers
-const result = await send(math.square(math.add(1, 2)))
+//
+// The explicit annotation documents the contract: this program's type is a
+// number because the backend math.ts module types math.square that way
+const program: number = math.square(math.add(1, 2))
+
+const result = await send(program)
 console.log(result) // 9
 
