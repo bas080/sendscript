@@ -340,7 +340,10 @@ cat ./example/typescript/client.ts
 ```
 
 TypeScript knows the exact parameter types and return types for every function
-call.
+call. The explicit annotation on the program is where the backend contract
+becomes visible: `math.square` is typed by the backend `math.ts` module, so a
+program that in truth is not a number fails to compile before anything is sent
+over the wire.
 
 ### Generating API Documentation
 
