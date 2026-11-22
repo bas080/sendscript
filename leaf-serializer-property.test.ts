@@ -1,5 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
+import fc from 'fast-check'
 import SuperJSON from 'superjson'
 
 const leafSerializer = (value: unknown) => {
@@ -47,157 +48,153 @@ const getTypeInfo = (value: unknown): string => {
   return typeof value
 }
 
-const samples: unknown[] = [
-  undefined,
-  null,
-  false,
-  true,
-  0,
-  -1,
-  3.14,
-  NaN,
-  Infinity,
-  '',
-  'hello',
-  'multi\nline',
-  Symbol('a'),
-  BigInt('9007199254740993'),
-  new Date('2020-01-01T00:00:00.000Z'),
-  /abc/gi,
-  new Set([1, 2, 3]),
-  new Map([['a', 1]]),
-  [1, 'two', null, [3]],
-  { nested: { list: [1, 'two', null] } },
-  () => {}
-]
-
-// gen.primitive equivalent: null, booleans, numbers and strings only
-const primitiveSamples: unknown[] = samples.filter(
-  (value) =>
-    value === null ||
-    ['number', 'string', 'boolean'].includes(typeof value)
-)
-
 // Property 1: Round-trip - any value that can be serialized should deserialize to an equal value
 test('property: round-trip serialization preserves value', () => {
-  for (const value of samples) {
-    let threw = false
+  fc.assert(
+    fc.property(fc.anything(), (value) => {
+      let serialized: string
 
-    try {
-      const serialized = leafSerializer(value)
+      try {
+        serialized = leafSerializer(value as any)
+      } catch {
+        // If serialization fails on a particular value, that's acceptable
+        // (not all values may be serializable)
+        return true
+      }
+
       const deserialized = leafDeserializer(serialized)
       const typeInfo = getTypeInfo(value)
-      assert.ok(valueEquals(deserialized, value), `Round-trip preserved ${typeInfo}`)
-    } catch (e) {
-      threw = true
-      // If serialization fails on a particular value, that's acceptable
-      // (not all values may be serializable)
-      const typeInfo = getTypeInfo(value)
-      assert.ok(true, `Serialization of ${typeInfo} threw: ${(e as Error).message}`)
-    }
 
-    if (threw) assert.ok(true)
-  }
+      if (!valueEquals(deserialized, value)) {
+        throw new Error(`Round-trip not preserved for ${typeInfo}`)
+      }
+
+      return true
+    })
+  )
 })
 
 // Property 2: Determinism - serializing the same value repeatedly produces identical results
 test('property: serialization is deterministic', () => {
-  for (const value of samples) {
-    let serialized1: string
-    let serialized2: string
+  fc.assert(
+    fc.property(fc.anything(), (value) => {
+      let serialized1: string
+      let serialized2: string
 
-    try {
-      serialized1 = leafSerializer(value)
-      serialized2 = leafSerializer(value)
-    } catch (e) {
-      assert.ok(true, `Serialization threw for ${getTypeInfo(value)}: ${(e as Error).message}`)
-      continue
-    }
+      try {
+        serialized1 = leafSerializer(value as any)
+        serialized2 = leafSerializer(value as any)
+      } catch {
+        return true
+      }
 
-    const typeInfo = getTypeInfo(value)
-    assert.equal(serialized1, serialized2, `Serialization of ${typeInfo} is deterministic`)
-  }
+      const typeInfo = getTypeInfo(value)
+
+      if (serialized1 !== serialized2) {
+        throw new Error(`Serialization of ${typeInfo} is not deterministic`)
+      }
+
+      return true
+    })
+  )
 })
 
 // Property 3: Valid JSON - serialized output is always valid JSON
 test('property: serialized output is valid JSON', () => {
-  for (const value of samples) {
-    let serialized: string
+  fc.assert(
+    fc.property(fc.anything(), (value) => {
+      let serialized: string
 
-    try {
-      serialized = leafSerializer(value)
-    } catch {
-      continue
-    }
+      try {
+        serialized = leafSerializer(value as any)
+      } catch {
+        return true
+      }
 
-    try {
-      const parsed = JSON.parse(serialized)
-      assert.ok(typeof parsed === 'object' || typeof parsed === 'string', 'Parsed JSON is an object or string')
-    } catch (e) {
-      assert.fail(`Invalid JSON output for ${getTypeInfo(value)}: ${(e as Error).message}`)
-    }
-  }
+      let parsed: unknown
+
+      try {
+        parsed = JSON.parse(serialized)
+      } catch (e) {
+        throw new Error(`Invalid JSON output for ${getTypeInfo(value)}: ${(e as Error).message}`)
+      }
+
+      if (!(typeof parsed === 'object' || typeof parsed === 'string')) {
+        throw new Error(`Parsed JSON is not an object or string for ${getTypeInfo(value)}`)
+      }
+
+      return true
+    })
+  )
 })
 
 // Property 4: Undefined handling - undefined values are preserved through round-trip
 test('property: undefined values are preserved through serialization', () => {
-  for (const value of samples) {
-    if (value === undefined) {
+  fc.assert(
+    fc.property(fc.constant(undefined), (value) => {
       const serialized = leafSerializer(value)
       const deserialized = leafDeserializer(serialized)
-      assert.equal(deserialized, undefined, 'Undefined preserved through serialization')
-    } else {
-      assert.ok(true, 'Value was not undefined')
-    }
-  }
+
+      if (deserialized !== undefined) {
+        throw new Error('Undefined not preserved through serialization')
+      }
+
+      return true
+    })
+  )
 })
 
 // Property 5: Type distinctness - Different values should have different serializations (when possible)
 test('property: different primitives have different serializations', () => {
-  for (const val1 of primitiveSamples) {
-    for (const val2 of primitiveSamples) {
-      if (val1 !== val2 && !(Number.isNaN(val1) && Number.isNaN(val2))) {
-        let ser1: string
-        let ser2: string
+  fc.assert(
+    fc.property(
+      fc.oneof(fc.constantFrom(null), fc.boolean(), fc.integer(), fc.string()),
+      fc.oneof(fc.constantFrom(null), fc.boolean(), fc.integer(), fc.string()),
+      (val1, val2) => {
+        if (val1 !== val2 && !(Number.isNaN(val1) && Number.isNaN(val2))) {
+          const ser1 = leafSerializer(val1)
+          const ser2 = leafSerializer(val2)
+          const typeInfo1 = getTypeInfo(val1)
+          const typeInfo2 = getTypeInfo(val2)
 
-        try {
-          ser1 = leafSerializer(val1)
-          ser2 = leafSerializer(val2)
-        } catch {
-          continue
+          if (ser1 === ser2) {
+            throw new Error(`Different primitives ${typeInfo1} and ${typeInfo2} have equal serializations`)
+          }
         }
 
-        assert.notEqual(
-          ser1,
-          ser2,
-          `Different primitives ${getTypeInfo(val1)} and ${getTypeInfo(val2)} have different serializations`
-        )
-      } else {
-        assert.ok(true, 'Primitives are equal or both NaN')
+        return true
       }
-    }
-  }
+    )
+  )
 })
 
 // Property 6: Idempotence of serialization - Re-parsing serialized value produces same serialization
 test('property: serialization round-trip is stable', () => {
-  for (const value of samples) {
-    let ser1: string
-    let deser1: unknown
+  fc.assert(
+    fc.property(fc.anything(), (value) => {
+      let ser1: string
+      let deser1: unknown
 
-    try {
-      ser1 = leafSerializer(value)
-      deser1 = leafDeserializer(ser1)
-    } catch (e) {
-      assert.ok(true, `Serialization error for ${getTypeInfo(value)}: ${(e as Error).message}`)
-      continue
-    }
+      try {
+        ser1 = leafSerializer(value as any)
+        deser1 = leafDeserializer(ser1)
+      } catch {
+        return true
+      }
 
-    try {
-      const ser2 = leafSerializer(deser1)
-      assert.equal(ser1, ser2, `Serialization is stable for ${getTypeInfo(value)}`)
-    } catch (e) {
-      assert.ok(true, `Serialization error for ${getTypeInfo(value)}: ${(e as Error).message}`)
-    }
-  }
+      let ser2: string
+
+      try {
+        ser2 = leafSerializer(deser1)
+      } catch (e) {
+        throw new Error(`Serialization not stable for ${getTypeInfo(value)}: ${(e as Error).message}`)
+      }
+
+      if (ser1 !== ser2) {
+        throw new Error(`Serialization is not stable for ${getTypeInfo(value)}`)
+      }
+
+      return true
+    })
+  )
 })
