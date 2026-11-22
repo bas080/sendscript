@@ -376,24 +376,14 @@ can be safely sent and executed elsewhere.
 You can define a schema as **an array of function names**
 
 ```js
-
 const schema = [
   'help',
   'version',
 
-  ['math', [
-    'add',
-    'sub'
-  ]],
-  ['vector', [
-    'add',
-    'multiply'
-  ]],
-  ['utils', [
-    'identity',
-    'always'
-  ]],
-})
+  ['math', ['add', 'sub']],
+  ['vector', ['length', 'multiply']],
+  ['utils', ['identity', 'always']],
+]
 ```
 
 Functions are referenced via their **path in the module tree**:
@@ -409,27 +399,72 @@ math.add(1, vector.length(vector.multiply([1, 2], 3)))
 SendScript focuses on program serialization and execution. For runtime input
 validation, you can use [Zod](https://zod.dev).
 
-### Validating structured input
+Program structure is already constrained by the schema tree: only declared paths
+are reachable and arguments arrive as deserialized leaf values. What remains
+unvalidated are the payload contents of those leaves. Validate them at the leaf
+boundary, inside the module function that receives them:
 
 ```js
-const userSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  roles: z.array(z.string()),
+import { z } from 'zod'
+
+const multiplyInput = z.object({
+  v: z.array(z.number()).min(1),
+  k: z.number(),
 })
 
-export function createUser(user) {
-  userSchema.parse(user)
+export const vector = {
+  multiply: (args) => {
+    const { v, k } = multiplyInput.parse(args)
 
-  return { success: true }
+    return v.map((x) => x * k)
+  },
+  length: (v) => Math.hypot(...v),
 }
+```
+
+One Zod schema per leaf function. When a program supplies something else, the
+`ZodError` thrown by `multiplyInput.parse` propagates as a rejection of the
+client program:
+
+```js
+try {
+  await api.vector.multiply({ v: 'not-an-array', k: 3 })
+} catch (error) {
+  // ZodError: Expected array, received string at path ["v"]
+}
+```
+
+### Type inference loop
+
+Write each Zod schema once and derive both the server signature and the client
+stub types from it:
+
+```ts
+type MultiplyArgs = z.infer<typeof multiplyInput>
+
+export const vector = {
+  multiply: (args: MultiplyArgs) => {
+    const { v, k } = multiplyInput.parse(args)
+
+    return v.map((x) => x * k)
+  },
+}
+```
+
+Because the server module is fully typed, the client reference inherits the same
+contract:
+
+```ts
+const api = references<typeof module>([['vector', ['multiply']]])
+
+api.vector.multiply({ v: [1, 2], k: 3 })
 ```
 
 **Benefits**:
 
-- Ensures arguments match expected types and shapes.
-- Throws structured errors that can be propagated to clients.
-- Works with TypeScript for automatic type inference.
+- Arguments are validated at the leaf boundary, where the payload is known.
+- `z.infer` derives both server types and client stub types from one schema.
+- Throws structured errors that propagate to clients as program rejections.
 
 ## Leaf Serializer
 
