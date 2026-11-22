@@ -24,11 +24,11 @@
   "author": "Bas Huis",
   "license": "MIT",
   "devDependencies": {
-    "superjson": "^2.2.6",
-    "tap": "^21.7.1",
+    "superjson": "^2.2.7",
+    "tap": "^21.8.1",
     "tape-check": "^1.0.0-rc.0",
     "typedoc": "^0.28.18",
-    "typedoc-plugin-markdown": "^4.11.0"
+    "typedoc-plugin-markdown": "^4.14.1"
   },
   "dependencies": {
     "debug": "^4.4.3"
