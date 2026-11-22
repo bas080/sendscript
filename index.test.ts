@@ -108,7 +108,7 @@ test('should evaluate basic expressions correctly', async t => {
   })
 
   await t.test('supports fns without arguments', async () => {
-    assert.equal(run(() => add(1, 2))(), 3)
+    assert.equal((run(() => add(1, 2)) as () => unknown)(), 3)
     assert.equal(run(always(() => 42)()()), 42)
     assert.equal(run(always((x: unknown) => add(x, 42))()(2)), 44)
   })
@@ -126,7 +126,7 @@ test('should evaluate basic expressions correctly', async t => {
   await t.test('supports .then', async () => {
     const something = 30
 
-    await assert.rejects(run(reject('error')))
+    await assert.rejects(run(reject('error')) as Promise<unknown>)
 
     assert.equal(await run(reject('error').catch(sayHello)), 'hello error')
     assert.equal(await run(reject('error').then(null, sayHello)), 'hello error')
@@ -182,7 +182,7 @@ test('should evaluate basic expressions correctly', async t => {
   })
 
   await t.test('mix await without await', async () => {
-    const [one, two] = await run([await resolve(1), resolve(2)])
+    const [one, two] = (await run([await resolve(1), resolve(2)])) as unknown[]
 
     assert.equal(one, 1)
     assert.ok(two instanceof RealPromise)
