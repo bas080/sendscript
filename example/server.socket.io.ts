@@ -2,7 +2,7 @@
 
 import { Server } from 'socket.io'
 import Parse from 'sendscript/parse.ts'
-import * as math from './math.ts'
+import * as math from './typescript/math.ts'
 
 const schema = Object.keys(math)
 const parse = Parse(schema, math)

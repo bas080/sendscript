@@ -148,10 +148,14 @@ For this example we'll use [socket.io][socket.io].
 
 We write a simple module.
 
-```js cat - > ./example/math.ts
-// ./example/math.ts
+```js cat - > ./example/typescript/math.ts
+/**
+ * Server-side math module with typed functions
+ * These functions will be called from the client through SendScript
+ */
 
 export const add = (a: number, b: number): number => a + b
+
 export const square = (a: number): number => a * a
 ```
 
@@ -164,7 +168,7 @@ Here's a socket.io server that runs SendScript programs.
 
 import { Server } from 'socket.io'
 import Parse from 'sendscript/parse.ts'
-import * as math from './math.ts'
+import * as math from './typescript/math.ts'
 
 const schema = Object.keys(math)
 const parse = Parse(schema, math)
@@ -230,12 +234,12 @@ Now we run this server and a client script.
 set -e
 
 # Run the server
-node ./example/server.socket.io.ts&
+PORT=4211 node ./example/server.socket.io.ts&
 
 # Run the client example
-node ./example/client.socket.io.ts
+PORT=4211 node ./example/client.socket.io.ts
 
-pkill sendscript
+pkill sendscript || true
 ```
 
 ## Repl
@@ -344,7 +348,7 @@ You can use [typedoc][typedoc] to automatically generate documentation from your
 TypeScript types:
 
 ```bash bash
-npx typedoc --plugin typedoc-plugin-markdown --out ./docs ./example/typescript/math.ts
+npx typedoc --plugin typedoc-plugin-markdown --out ./docs --tsconfig ./example/typescript/tsconfig.json ./example/typescript/math.ts
 ```
 
 This generates markdown docs that can be shared with API consumers. See the
