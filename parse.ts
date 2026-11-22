@@ -65,13 +65,14 @@ export default function Parse (
   schema: Schema,
   env: unknown,
   leafParse: LeafParse = defaultLeafParse
-): (program: string) => any {
+): (program: string) => unknown {
   const flatSchema = flattenSchema(schema)
 
   /**
    * Parses and executes a serialized program.
    *
    * @param program - JSON encoded program
+   * @returns The evaluated value, or a Promise of it when the program contains awaits
    */
   return function parse (program: string): any {
     debug('program', program)
