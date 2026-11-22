@@ -1,8 +1,8 @@
-// ./example/client.socket.io.mjs
+// ./example/client.socket.io.ts
 
 import socketClient from 'socket.io-client'
-import Stringify from 'sendscript/stringify.mjs'
-import references from 'sendscript/references.mjs'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
 import assert from 'node:assert'
 
 const { add, square } = references(['add', 'square'])
@@ -11,9 +11,9 @@ const stringify = Stringify()
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const send = (program) => {
+const send = (program: unknown) => {
   return new Promise((resolve, reject) => {
-    client.emit('message', stringify(program), (error, result) => {
+    client.emit('message', stringify(program), (error: any, result: unknown) => {
       error ? reject(error) : resolve(result)
     })
   })

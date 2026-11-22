@@ -8,7 +8,7 @@ The pre-push git hook.
 set -xeuo pipefail
 
 npm t
-npx standard
+npm run typecheck
 npx prettier -c --parser markdown *.mz
 ```
 
@@ -35,10 +35,10 @@ Check if no vulnerable dependencies
 npm audit
 ```
 
-Check if code follows standard formatting.
+Check if code type checks.
 
 ```bash bash
-npx standard
+npm run typecheck
 ```
 
 Check if markdown is correctly formatted.

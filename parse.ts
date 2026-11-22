@@ -1,8 +1,14 @@
-import Debug from './debug.mjs'
-import { SendScriptReferenceError } from './error.mjs'
+import Debug from './debug.ts'
+import { SendScriptReferenceError } from './error.ts'
+import type { Schema } from './schema.ts'
 
-function flattenSchema (schema) {
-  const obj = {}
+/**
+ * Default deserializer for leaf nodes.
+ */
+export const defaultLeafParse = (text: string): unknown => JSON.parse(text)
+
+function flattenSchema (schema: Schema): Record<string, any> {
+  const obj: Record<string, any> = {}
 
   for (const item of schema) {
     if (typeof item === 'string') {
@@ -25,32 +31,21 @@ function flattenSchema (schema) {
 
 const debug = Debug.extend('parse')
 
-const undefinedSentinel = Symbol('sendscript-undefined')
+const undefinedSentinel: unique symbol = Symbol('sendscript-undefined')
 
-const isPlainObject = (value) => {
+const isPlainObject = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return false
   const proto = Object.getPrototypeOf(value)
   return proto === Object.prototype || proto === null
 }
 
-const spy = (type, fn) => (...args) => {
+const spy = (type: string, fn: (...args: any[]) => any) => (...args: any[]) => {
   const value = fn(...args)
   debug(type, args, ' => ', value)
   return value
 }
 
 /**
- * Default deserializer for leaf nodes.
- *
- * @param {string} text
- * @returns {any}
- * @public
- */
-const defaultLeafParse = (text) => JSON.parse(text)
-
-/**
- * @template Env
- *
  * Creates a program parser for a given schema and environment.
  *
  * The parser:
@@ -58,28 +53,24 @@ const defaultLeafParse = (text) => JSON.parse(text)
  * - deserializes leaf nodes
  * - collects and executes async awaits
  * - evaluates AST-like JSON programs
- *
- * @param {Schema}  schema
- * @param {Env} env - runtime environment for refs
- * @param {(text: string) => any} [leafParse=defaultLeafParse]
- * @returns {parse}
- * @public
  */
-export default function Parse (schema, env, leafParse = defaultLeafParse) {
+export default function Parse (
+  schema: Schema,
+  env: unknown,
+  leafParse: (text: string) => unknown = defaultLeafParse
+): (program: string) => any {
   const flatSchema = flattenSchema(schema)
 
   /**
    * Parses and executes a serialized program.
    *
-   * @param {string} program - JSON encoded program
-   * @returns {any|Promise<any>}
-   * @public
+   * @param program - JSON encoded program
    */
-  return function parse (program) {
+  return function parse (program: string): any {
     debug('program', program)
-    const awaits = []
+    const awaits: any[] = []
 
-    const evaluateOuter = spy('eval', (env, value) => {
+    const evaluateOuter = spy('eval', (env: any, value: any): any => {
       const evaluate = evaluateOuter.bind(null, env)
 
       if (value === undefinedSentinel) return undefined
@@ -103,10 +94,10 @@ export default function Parse (schema, env, leafParse = defaultLeafParse) {
         if (operator === 'fn') {
           const [argIds, body] = [...rest]
 
-          return (...args) => {
-            const newEnv = Object.create(env)
+          return (...args: unknown[]) => {
+            const newEnv: any = Object.create(env)
 
-            argIds.forEach((id, index) => {
+            argIds.forEach((id: string, index: number) => {
               newEnv[id] = args[index]
             })
 
@@ -152,12 +143,8 @@ export default function Parse (schema, env, leafParse = defaultLeafParse) {
     /**
      * JSON reviver used during parsing.
      * Converts encoded operators into runtime structures.
-     *
-     * @param {string} key
-     * @param {any} value
-     * @returns {any}
      */
-    const reviver = spy('revive', (key, value) => {
+    const reviver = spy('revive', (key: string, value: any) => {
       if (value === null) return value
 
       if (!Array.isArray(value)) return value
@@ -170,21 +157,21 @@ export default function Parse (schema, env, leafParse = defaultLeafParse) {
       }
 
       if (operator === 'await') {
-        const [program] = rest
-        return ['await', awaits.push(program) - 1]
+        const [awaitProgram] = rest
+        return ['await', awaits.push(awaitProgram) - 1]
       }
 
       if (operator === 'ref') {
         const path = rest
-        let current = env
-        let schemaCurrent = flatSchema
+        let current: any = env
+        let schemaCurrent: any = flatSchema
 
         for (const segment of path) {
           if (schemaCurrent && Object.hasOwn(schemaCurrent, segment)) {
             current = current[segment]
             schemaCurrent = schemaCurrent[segment]
           } else {
-            throw new SendScriptReferenceError({ key, value })
+            throw new SendScriptReferenceError({ key, value } as any)
           }
         }
 

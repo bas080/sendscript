@@ -1,25 +1,25 @@
-import Debug from './debug.mjs'
-import { SendScriptSerializationError } from './error.mjs'
+import Debug from './debug.ts'
+import { SendScriptSerializationError } from './error.ts'
 import {
   awaitSymbol,
   referenceSymbol,
   then,
   call,
   ref
-} from './symbol.mjs'
+} from './symbol.ts'
 
 const asyncFunction = async function () {}
 asyncFunction()
-const AsyncFunction = (asyncFunction).constructor
+const AsyncFunction = asyncFunction.constructor
 
 const debug = Debug.extend('stringify')
 
 const keywords = ['ref', 'call', 'quote', 'await', 'leaf', 'arg', 'fn']
 const argSymbol = Symbol('arg')
 
-const isKeyword = (v) => keywords.includes(v)
+const isKeyword = (v: unknown): boolean => keywords.includes(v as string)
 
-const isPlainObject = (value) => {
+const isPlainObject = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return false
   const proto = Object.getPrototypeOf(value)
   return proto === Object.prototype || proto === null
@@ -29,12 +29,8 @@ const isPlainObject = (value) => {
  * Default strict serializer for leaf values.
  *
  * Rejects non-JSON-safe values.
- *
- * @param {any} x
- * @returns {string}
- * @public
  */
-function defaultLeafStringify (x) {
+export function defaultLeafStringify (x: unknown): string {
   const typeOf = typeof x
 
   if (typeOf === 'object' || typeOf === 'function' || x === undefined) {
@@ -48,24 +44,16 @@ function defaultLeafStringify (x) {
 
 /**
  * Creates a stringify function for SendScript AST structures.
- *
- * @param {(value: any) => string} [leafSerializer=strictStringify]
- * @returns {stringify}
- * @public
  */
-export default function Stringify (leafStringify = defaultLeafStringify) {
+export default function Stringify (leafStringify: (value: unknown) => string = defaultLeafStringify) {
   /**
    * Serializes a program into a JSON string representation.
-   *
-   * @param {any} program
-   * @returns {string}
-   * @public
    */
-  return function stringify (program) {
+  return function stringify (program: unknown): string {
     // Reset the argId
     let argId = 0
 
-    function transformValue (value) {
+    function transformValue (value: any): any {
       debug(value)
 
       if (value === null) return null
@@ -81,12 +69,12 @@ export default function Stringify (leafStringify = defaultLeafStringify) {
           throw new SendScriptSerializationError('Sendscript does not support async functions as of yet.')
         }
 
-        const args = []
-        const argIds = []
+        const args: any[] = []
+        const argIds: number[] = []
 
         for (let i = 0; i < value.length; i++) {
           const arg = argId++
-          const placeholder = ['arg', arg]
+          const placeholder: any = ['arg', arg]
 
           placeholder[argSymbol] = argSymbol
 
@@ -132,15 +120,15 @@ export default function Stringify (leafStringify = defaultLeafStringify) {
         if (isKeyword(operator)) {
           return [
             ['quote', operator],
-            ...rest.map((item) => transformValue(item))
+            ...rest.map((item: any) => transformValue(item))
           ]
         }
 
-        return value.map((item) => transformValue(item))
+        return value.map((item: any) => transformValue(item))
       }
 
       if (isPlainObject(value)) {
-        const result = {}
+        const result: Record<string, unknown> = {}
 
         for (const key of Object.keys(value)) {
           result[key] = transformValue(value[key])

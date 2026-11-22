@@ -72,9 +72,9 @@ npm install sendscript
 Here's the simplest example to get started with SendScript:
 
 ```js
-import Stringify from 'sendscript/stringify.mjs'
-import Parse from 'sendscript/parse.mjs'
-import references from 'sendscript/references.mjs'
+import Stringify from 'sendscript/stringify.ts'
+import Parse from 'sendscript/parse.ts'
+import references from 'sendscript/references.ts'
 
 // Define your functions
 const functions = {
@@ -128,8 +128,8 @@ SendScript produces an intermediate JSON representation of the program. Let's
 see what that looks like.
 
 ```js
-import Stringify from 'sendscript/stringify.mjs'
-import references from 'sendscript/references.mjs'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
 
 const { add } = references(['add'])
 const stringify = Stringify()
@@ -143,7 +143,7 @@ console.log(stringify(add(1,2)))
 We can then parse that JSON and it will evaluate down to a value.
 
 ```js
-import Parse from 'sendscript/parse.mjs'
+import Parse from 'sendscript/parse.ts'
 
 const module = {
   add(a, b) {
@@ -191,7 +191,7 @@ For this example we'll use [socket.io][socket.io].
 We write a simple module.
 
 ```js
-// ./example/math.mjs
+// ./example/math.ts
 
 export const add = (a, b) => a + b
 export const square = (a) => a * a
@@ -202,11 +202,11 @@ export const square = (a) => a * a
 Here's a socket.io server that runs SendScript programs.
 
 ```js
-// ./example/server.socket.io.mjs
+// ./example/server.socket.io.ts
 
 import { Server } from 'socket.io'
-import Parse from 'sendscript/parse.mjs'
-import * as math from './math.mjs'
+import Parse from 'sendscript/parse.ts'
+import * as math from './math.ts'
 
 const schema = Object.keys(math)
 const parse = Parse(schema, math)
@@ -233,11 +233,11 @@ process.title = 'sendscript'
 Now for a client that sends a program to the server.
 
 ```js
-// ./example/client.socket.io.mjs
+// ./example/client.socket.io.ts
 
 import socketClient from 'socket.io-client'
-import Stringify from 'sendscript/stringify.mjs'
-import references from 'sendscript/references.mjs'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
 import assert from 'node:assert'
 
 const { add, square } = references(['add', 'square'])
@@ -272,10 +272,10 @@ Now we run this server and a client script.
 set -e
 
 # Run the server
-node ./example/server.socket.io.mjs&
+node ./example/server.socket.io.ts&
 
 # Run the client example
-node ./example/client.socket.io.mjs
+node ./example/client.socket.io.ts
 
 pkill sendscript
 ```
@@ -323,8 +323,8 @@ If you want native `await` to cross the transport boundary, pass an `onAwait`
 handler when creating the references:
 
 ```js
-import Stringify from 'sendscript/stringify.mjs'
-import references from 'sendscript/references.mjs'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
 
 const stringify = Stringify()
 
@@ -384,7 +384,7 @@ cat ./example/typescript/math.client.ts
  */
 
 import type * as mathTypes from './math.ts'
-import references from 'sendscript/references.mjs'
+import references from 'sendscript/references.ts'
 
 // Create type-safe stubs - this tells TypeScript that 'add' and 'square' 
 // have the same signatures as the server functions
@@ -412,7 +412,7 @@ cat ./example/typescript/client.ts
  */
 
 import math from './math.client.ts'
-import Stringify from 'sendscript/stringify.mjs'
+import Stringify from 'sendscript/stringify.ts'
 
 const stringify = Stringify()
 
@@ -550,9 +550,9 @@ extended types:
 
 ```js
 import SuperJSON from 'superjson'
-import Stringify from 'sendscript/stringify.mjs'
-import references from 'sendscript/references.mjs'
-import Parse from 'sendscript/parse.mjs'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
+import Parse from 'sendscript/parse.ts'
 
 const leafSerializer = (value) => {
   if (value === undefined) return JSON.stringify({ __undefined__: true })

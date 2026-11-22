@@ -2,9 +2,10 @@
   "name": "sendscript",
   "version": "2.5.2",
   "description": "Blur the line between server and client code.",
-  "module": true,
-  "main": "index.mjs",
-  "bin": "./cli.mjs",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "bin": "./cli.ts",
   "keywords": [
     "rpc",
     "json",
@@ -17,18 +18,20 @@
     "url": "git+ssh://git@github.com/bas080/sendscript.git"
   },
   "scripts": {
-    "test": "tap",
+    "test": "node --test",
+    "typecheck": "tsc --noEmit",
     "version": "npm run docs",
     "docs": "markatzea CONTRIBUTING.md"
   },
   "author": "Bas Huis",
   "license": "MIT",
   "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/node": "^22.18.0",
     "superjson": "^2.2.7",
-    "tap": "^21.8.1",
-    "tape-check": "^1.0.0-rc.0",
     "typedoc": "^0.28.18",
-    "typedoc-plugin-markdown": "^4.14.1"
+    "typedoc-plugin-markdown": "^4.14.1",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "debug": "^4.4.3"
