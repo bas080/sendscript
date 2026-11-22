@@ -317,15 +317,15 @@ cat ./example/typescript/math.ts
 
 ### Client-Side Type Stub
 
-Create a client-side file that mirrors your server types using the `as typeof`
-casting pattern:
+Create a client-side file that mirrors your server types by passing the module
+types to the `references` function:
 
 ```bash|ts bash
 cat ./example/typescript/math.client.ts
 ```
 
-The `as typeof mathTypes` type assertion gives your client-side references the
-exact same types as your server module. This means:
+The type argument on `references<typeof mathTypes>` gives your client-side
+references the exact same types as your server module. This means:
 
 - Full IDE autocomplete for function names and parameters
 - Compile-time type checking - catch errors before runtime
