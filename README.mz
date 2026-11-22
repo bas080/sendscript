@@ -151,8 +151,8 @@ We write a simple module.
 ```js cat - > ./example/math.ts
 // ./example/math.ts
 
-export const add = (a, b) => a + b
-export const square = (a) => a * a
+export const add = (a: number, b: number): number => a + b
+export const square = (a: number): number => a * a
 ```
 
 ### Server
@@ -204,9 +204,9 @@ const stringify = Stringify()
 const port = process.env.PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const send = (program) => {
+const send = (program: unknown) => {
   return new Promise((resolve, reject) => {
-    client.emit('message', stringify(program), (error, result) => {
+    client.emit('message', stringify(program), (error: any, result: unknown) => {
       error ? reject(error) : resolve(result)
     })
   })
@@ -539,16 +539,15 @@ with async functions.
 Tests with 100% code coverage.
 
 ```bash bash
-npm t -- -R silent
-npm t -- report text-summary
+npm t -- --test-reporter=dot --test-reporter-destination=stdout
 ```
 
-## Formatting
+## Type checking
 
-Standard because no config.
+TypeScript, strict mode, no emit.
 
 ```bash bash
-npx standard
+npm run typecheck
 ```
 
 ## Changelog
