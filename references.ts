@@ -1,20 +1,32 @@
-import { awaitSymbol, call, ref, then, referenceSymbol } from './symbol.mjs'
+import {
+  awaitSymbol,
+  call,
+  ref,
+  then,
+  referenceSymbol
+} from './symbol.ts'
+import type { ReferenceJSON } from './symbol.ts'
+import type { Schema } from './schema.ts'
+
+export type OnAwait = ((program: unknown) => unknown) | null
+
+export interface Reference {
+  (...args: unknown[]): Reference
+  catch: (reject: unknown) => Reference
+  then?: (resolve: unknown, reject?: unknown) => unknown
+  toJSON: () => ReferenceJSON
+  [referenceSymbol]: typeof referenceSymbol
+}
 
 /**
  * Creates a callable reference node bound to a path.
  * Used to build a lazy/instrumented execution structure.
- *
- * @param {Array<string>} path - Path representing the function location in schema.
- * @returns {Function} Reference function with attached control methods (.then, .catch, toJSON).
  */
-function instrument (path, onAwait = null) {
+function instrument (path: string[], onAwait: OnAwait = null): Reference {
   /**
    * Creates a callable reference invocation.
-   *
-   * @param {...any} args - Arguments passed to the call.
-   * @returns {Function} New instrumented reference node.
    */
-  function reference (...args) {
+  function reference (...args: unknown[]): Reference {
     const called = instrument(path, onAwait)
 
     called.toJSON = () => ({
@@ -28,12 +40,8 @@ function instrument (path, onAwait = null) {
 
   /**
    * Internal helper for building promise-like continuation nodes.
-   *
-   * @param {Function|null} resolve
-   * @param {Function|null} reject
-   * @returns {Function} Instrumented continuation node.
    */
-  function dotThen (resolve, reject) {
+  function dotThen (resolve: unknown, reject: unknown): Reference {
     const node = instrument(path)
 
     node.toJSON = () => ({
@@ -48,26 +56,17 @@ function instrument (path, onAwait = null) {
 
   /**
    * Registers rejection handler (promise-style).
-   *
-   * @param {Function} reject
-   * @returns {Function}
    */
-  reference.catch = (reject) => {
-    return dotThen(null, reject)
-  }
+  reference.catch = (reject: unknown): Reference => dotThen(null, reject)
 
   /**
    * Handles async chaining or awaiting logic.
    *
    * If resolve/reject contain a reference marker, it behaves like a .then chain.
    * Otherwise it behaves like an await wrapper.
-   *
-   * @param {Function} resolve
-   * @param {Function} reject
-   * @returns {Function|any}
    */
-  reference.then = (resolve, reject) => {
-    if (resolve?.[referenceSymbol] || reject?.[referenceSymbol]) {
+  reference.then = (resolve: unknown, reject?: unknown): unknown => {
+    if ((resolve as any)?.[referenceSymbol] || (reject as any)?.[referenceSymbol]) {
       return dotThen(resolve, reject)
     }
 
@@ -80,18 +79,16 @@ function instrument (path, onAwait = null) {
     })
 
     if (typeof onAwait === 'function') {
-      return resolve(onAwait(awaited))
+      return (resolve as (program: unknown) => unknown)(onAwait(awaited))
     }
 
-    return resolve(awaited)
+    return (resolve as (program: unknown) => unknown)(awaited)
   }
 
   /**
    * JSON representation of the reference path node.
-   *
-   * @returns {{ref: symbol, path: Array<string>}}
    */
-  reference.toJSON = () => ({
+  reference.toJSON = (): ReferenceJSON => ({
     [ref]: ref,
     path
   })
@@ -101,17 +98,21 @@ function instrument (path, onAwait = null) {
   return reference
 }
 
+export interface ReferencesTree {
+  [key: string]: Reference | ReferencesTree
+}
+
 /**
  * Builds a nested API structure from a schema definition.
  *
- * @param {Schema} schema
- * @returns {Object} Nested instrumented API object
- *
  * @throws {Error} If schema format is invalid
- * @public
  */
-export default function References (schema, onAwait = null, parentPath = []) {
-  return schema.reduce((acc, item) => {
+export default function References (
+  schema: Schema,
+  onAwait: OnAwait = null,
+  parentPath: string[] = []
+): Record<string, any> {
+  return schema.reduce<Record<string, any>>((acc, item) => {
     if (typeof item === 'string') {
       acc[item] = instrument([...parentPath, item], onAwait)
     } else if (Array.isArray(item)) {

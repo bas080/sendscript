@@ -1,8 +1,8 @@
-// ./example/server.socket.io.mjs
+// ./example/server.socket.io.ts
 
 import { Server } from 'socket.io'
-import Parse from 'sendscript/parse.mjs'
-import * as math from './math.mjs'
+import Parse from 'sendscript/parse.ts'
+import * as math from './math.ts'
 
 const schema = Object.keys(math)
 const parse = Parse(schema, math)

@@ -6,7 +6,7 @@
  */
 
 import type * as mathTypes from './math.ts'
-import references from 'sendscript/references.mjs'
+import references from 'sendscript/references.ts'
 
 // Create type-safe stubs - this tells TypeScript that 'add' and 'square' 
 // have the same signatures as the server functions

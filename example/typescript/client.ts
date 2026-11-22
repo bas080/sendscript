@@ -3,7 +3,7 @@
  */
 
 import math from './math.client.ts'
-import Stringify from 'sendscript/stringify.mjs'
+import Stringify from 'sendscript/stringify.ts'
 
 const stringify = Stringify()
 
