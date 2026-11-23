@@ -211,7 +211,7 @@ export default function Parse (
           }
         }
 
-        return current
+        return markHandled(current)
       }
 
       return value
