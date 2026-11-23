@@ -43,11 +43,12 @@ Leaf text is JSON stringified on the client and parsed on the server. This is
 where (de)serialization of anything JSON cannot express can be customized, at
 the `leafParse`/`leafStringify` hook.
 
-```js
-['leaf', '"Hello"'] // => "Hello"
-['leaf', '1']       // => 1
-['leaf', '[1,2]']   // => [1, 2]
+```json
+["leaf", "\"Hello\""]
 ```
+
+This evaluates to the string `Hello`. Other leaf texts: `["leaf", "1"]`
+evaluates to `1`, and `["leaf", "[1,2]"]` evaluates to `[1, 2]`.
 
 ### ref
 
@@ -55,19 +56,24 @@ Resolves a path of segments against the server module. Segments are scalar
 values and are matched against the declared schema. Anything not declared in
 the schema throws a `SendScriptReferenceError`, and so does an empty path.
 
-```js
-['ref', 'add']     // the add function
-['ref', 'nested', 'square'] // the nested.square function
+```json
+["ref", "add"]
 ```
+
+This evaluates to the `add` function. A path with more segments reaches nested
+members: `["ref", "nested", "square"]` evaluates to the `nested.square`
+function.
 
 ### call
 
 Calls the evaluated callee with the evaluated arguments. The third element must
 be a JSON array of argument nodes; each argument is evaluated deeply first.
 
-```js
-['call', ['ref', 'add'], [['leaf', '1'], ['leaf', '2']]] // => 3
+```json
+["call", ["ref", "add"], [["leaf", "1"], ["leaf", "2"]]]
 ```
+
+This evaluates to `3`.
 
 ### fn and arg
 
@@ -79,24 +85,29 @@ enclosing closure's scope.
 
 `"__proto__"` is reserved and cannot be used as an argument name.
 
-```js
-['call',
-  ['fn', [0], ['call', ['ref', 'square'], [['arg', 0]]]],
-  [['leaf', '3']]] // => 9
+```json
+["call",
+  ["fn", [0], ["call", ["ref", "square"], [["arg", 0]]]],
+  [["leaf", "3"]]]
 ```
+
+This evaluates to `9`.
 
 ### then
 
 Behaves like `Promise.prototype.then` on the evaluated first element. The
-handlers are evaluated first; non-callable handlers are ignored. A rejection
-without a rejection handler propagates to the program result where the caller
-can catch it.
+handlers are evaluated before the promise settles, so a handler that needs the
+resolved value must be a closure created with `fn`. A rejection without a
+rejection handler propagates to the program result where the caller can catch
+it.
 
-```js
-['then',
-  ['call', ['ref', 'resolve'], [['leaf', '1']]],
-  ['call', ['ref', 'add'], [['arg', 0], ['leaf', '2']]]] // => 3
+```json
+["then",
+  ["call", ["ref", "resolve"], [["leaf", "1"]]],
+  ["fn", [0], ["call", ["ref", "add"], [["arg", 0], ["leaf", "2"]]]]]
 ```
+
+This evaluates to `3`.
 
 ### await
 
@@ -104,10 +115,19 @@ Collects the program for evaluation and resolves its result when it settles.
 When a program contains awaits, `parse` returns a promise that resolves to the
 final result. Awaits may appear at any position, including as a property value.
 
-```js
-['await', ['call', ['ref', 'resolve'], [['leaf', '1']]]]     // => 1
-{ 'slow': ['await', ['call', ['ref', 'slowAdd'], [20, 22]]] } // => { 'slow': 42 }
+```json
+["await", ["call", ["ref", "resolve"], [["leaf", "1"]]]]
 ```
+
+This evaluates to `1`.
+
+```json
+{
+  "slow": ["await", ["call", ["ref", "slowAdd"], [20, 22]]]
+}
+```
+
+This evaluates to `{ "slow": 42 }`.
 
 ### quote
 
@@ -116,9 +136,11 @@ the reviver pass still runs: refs and leaves inside quoted data are resolved
 before `quote` ever sees them. To send operator-shaped *data*, use `stringify`,
 which escapes the operator keywords.
 
-```js
-['quote', { tag: 'plain', nested: [1, 2] }] // => { tag: 'plain', nested: [1, 2] }
+```json
+["quote", { "tag": "plain", "nested": [1, 2] }]
 ```
+
+This evaluates to `{ "tag": "plain", "nested": [1, 2] }`.
 
 ## Data shapes
 
@@ -126,13 +148,15 @@ Plain arrays are evaluated in place and return the array with evaluated
 elements. Plain objects are evaluated in place and return the object with
 evaluated property values. This composes with all operators.
 
-```js
+```json
 {
-  'sum': ['call', ['ref', 'add'], [['leaf', '1'], ['leaf', '2']]],
-  'label': ['leaf', '"total"'],
-  'list': [['call', ['ref', 'add'], [['leaf', '3'], ['leaf', '4']]], 'text']
-} // => { sum: 3, label: 'total', list: [7, 'text'] }
+  "sum": ["call", ["ref", "add"], [["leaf", "1"], ["leaf", "2"]]],
+  "label": ["leaf", "\"total\""],
+  "list": [["call", ["ref", "add"], [["leaf", "3"], ["leaf", "4"]]], "text"]
+}
 ```
+
+This evaluates to `{ "sum": 3, "label": "total", "list": [7, "text"] }`.
 
 ## Escaping
 
@@ -141,10 +165,15 @@ and `then`. When hand-writing a program, a data value that would collide with
 an operator needs to be marked. `stringify` does this automatically for data:
 strings become leaves and operator-shaped arrays get quoted.
 
-```js
-// given { 's': 'call', 'a': ['await', []] }
-{ 's': ['leaf', '"call"'], 'a': [['quote', 'await'], []] }
+```json
+{
+  "s": ["leaf", "\"call\""],
+  "a": [["quote", "await"], []]
+}
 ```
+
+This is what `stringify` produces for the data `{ "s": "call", "a": ["await",
+[]] }`, and it evaluates back to that same data.
 
 ## Error behavior
 
