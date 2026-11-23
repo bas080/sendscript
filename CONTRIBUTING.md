@@ -1,5 +1,15 @@
 # Contributing
 
+The markdown in this repository uses
+[markatzea](https://github.com/bas080/markatzea) to evaluate code-blocks.
+Markatzea reads a markdown file, pipes each code-block that declares an
+interpreter into that interpreter as stdin and prints the output of the process
+to a separate code-block:
+
+```bash
+markatzea ./file.mz > ./file.md
+```
+
 The pre-push git hook.
 
 ```bash cat - > .git/hooks/pre-push
@@ -63,7 +73,7 @@ function that evaluates the program against the vocabulary documented in the
 file. Define and export the function so markatzea can find it.
 
 ```bash bash
-evalagram() { node ./evalagram.ts }
+evalagram() { node ./script/evalagram.ts }
 export -f evalagram
 ```
 
