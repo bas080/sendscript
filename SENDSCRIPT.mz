@@ -20,6 +20,15 @@ The evaluation model has two passes:
 Everything else — plain arrays and plain objects — is a data shape that gets
 evaluated in place, property by property.
 
+The runnable examples in this document are evaluated with the script below. It
+declares the schema and the vocabulary against which every `ref` in this
+document resolves. Programs are evaluated by piping them into the script on
+stdin, and the result is printed as JSON.
+
+```bash|ts cat ./script/evalagram.ts
+cat ./script/evalagram.ts
+```
+
 ## Operators
 
 A program is any JSON value. An array whose first element is one of the operator
