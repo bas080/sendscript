@@ -5,6 +5,13 @@ A SendScript program is a plain JSON document. The client builds it with
 evaluates it with `parse` against a real module. This document describes the
 JSON exactly.
 
+Because a program is plain JSON, support for the format can be implemented in
+any language, both for clients (building and sending programs) and for servers
+(evaluating them). This package is the reference implementation in
+JavaScript/TypeScript; other languages only need to emit the operator nodes
+documented below on the client and reproduce the evaluation model on the
+server.
+
 The evaluation model has two passes:
 
 1. The reviver pass (during `JSON.parse`) deserializes leaf text, resolves refs
