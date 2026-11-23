@@ -31,6 +31,10 @@ Install SendScript from npm:
 npm install sendscript
 ```
 
+SendScript is published as plain TypeScript: no build step. Node 22.6 or
+higher runs `.ts` files natively. On older versions use a runner such as
+[tsx][tsx]: `npx tsx ./script.ts`.
+
 ## Quick Start
 
 Here's the simplest example to get started with SendScript:
@@ -576,9 +580,20 @@ likely never be supported as JS try catch does not have a return value. It might
 make sense to wrap everything that can throw in promises which is easy to do
 with async functions.
 
+Runtime safety is enforced by parse. Refs only resolve paths declared in the
+schema and throw SendScriptReferenceError otherwise, including for empty ref
+paths. `__proto__` is reserved as an arg name and throws. Rejections that a
+program drops, for example the result of a call bound to an unused fn arg, are
+contained so they cannot crash the host process. Rejections that surface in the
+result are yours to catch.
+
 ## Tests
 
 Tests with 100% code coverage.
+
+In addition there are property based tests generated with
+[fast-check][fast-check]. `npm t` evaluates thousands of randomized programs,
+envs and schemas and asserts parse either responds or throws an allowed error.
 
 ```bash bash
 npm t -- --test-reporter=dot --test-reporter-destination=stdout
@@ -610,6 +625,8 @@ See the [LICENSE.txt][license] file for details.
 See [issues][issues] for roadmap and known bugs.
 
 [license]: ./LICENSE.txt
+[tsx]: https://tsx.is/
+[fast-check]: https://fast-check.dev/
 [socket.io]: https://socket.io/
 [changelog]: ./CHANGELOG.md
 [auto-changelog]: https://www.npmjs.com/package/auto-changelog
