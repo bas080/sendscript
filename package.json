@@ -5,7 +5,7 @@
   "type": "module",
   "main": "index.ts",
   "types": "index.ts",
-  "bin": "./script/cli.ts",
+  "bin": "./bin/cli.ts",
   "keywords": [
     "rpc",
     "json",
