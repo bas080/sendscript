@@ -540,6 +540,23 @@ test('discarded rejected promises are contained', async t => {
       assert.strictEqual(await run(program), 7)
     })
 
+    await t.test('rejected promise nested in an evaluated array cannot kill the process', async () => {
+      const program = [['call', ['ref', 'reject'], [[]]]]
+      const out = run(program) as unknown[]
+
+      assert.ok(Array.isArray(out))
+      assert.ok(out[0] instanceof Promise)
+      await tick()
+      assert.deepStrictEqual(unhandled, [])
+    })
+
+    await t.test('rejected promise nested under await cannot kill the process', async () => {
+      const program = ['await', [['call', ['ref', 'reject'], [[]]]]]
+      await run(program)
+      await tick()
+      assert.deepStrictEqual(unhandled, [])
+    })
+
     await t.test('promises flowing through fn params still resolve normally', async () => {
       const program = ['call', ['fn', ['x'], ['arg', 'x']], [['call', ['ref', 'resolve'], [['leaf', '9']]]]]
 
