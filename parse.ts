@@ -40,6 +40,41 @@ const debug = Debug.extend('parse')
 
 const undefinedSentinel: unique symbol = Symbol('sendscript-undefined')
 
+const leafSentinel: unique symbol = Symbol('sendscript-leaf-data')
+
+interface LeafData {
+  [leafSentinel]: true
+  raw: unknown
+}
+
+const leafData = (raw: unknown): LeafData => ({ [leafSentinel]: true, raw })
+
+const isLeafData = (value: unknown): value is LeafData =>
+  value !== null && typeof value === 'object' &&
+  (value as LeafData)[leafSentinel] === true
+
+const unwrapLeafData = (value: any): any => {
+  if (isLeafData(value)) return value.raw
+
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      value[i] = unwrapLeafData(value[i])
+    }
+
+    return value
+  }
+
+  if (isPlainObject(value)) {
+    for (const key of Object.keys(value)) {
+      value[key] = unwrapLeafData(value[key])
+    }
+
+    return value
+  }
+
+  return value
+}
+
 const isPlainObject = (value: unknown): boolean => {
   if (!value || typeof value !== 'object') return false
   const proto = Object.getPrototypeOf(value)
@@ -99,6 +134,8 @@ export default function Parse (
 
       if (value === undefinedSentinel) return undefined
 
+      if (isLeafData(value)) return value.raw
+
       if (Array.isArray(value)) {
         const [operator, ...rest] = value
 
@@ -151,7 +188,7 @@ export default function Parse (
 
         if (operator === 'quote') {
           const [quoted] = rest
-          return quoted
+          return unwrapLeafData(quoted)
         }
 
         for (let i = 0; i < value.length; i++) {
@@ -184,7 +221,7 @@ export default function Parse (
 
       if (operator === 'leaf') {
         const leafValue = leafParse(rest[0])
-        return leafValue === undefined ? undefinedSentinel : leafValue
+        return leafValue === undefined ? undefinedSentinel : leafData(leafValue)
       }
 
       if (operator === 'await') {

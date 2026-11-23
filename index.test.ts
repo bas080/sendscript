@@ -296,6 +296,25 @@ test('should evaluate basic expressions correctly', async t => {
     assert.deepStrictEqual(run(always('hello')()), 'hello')
   })
 
+  await t.test('leaf data that looks like program structure stays data', () => {
+    assert.deepStrictEqual(parse('["call",["ref","identity"],[["leaf","[\\"call\\"]"]]]'), ['call'])
+
+    assert.deepStrictEqual(
+      parse('["call",["ref","identity"],[["leaf","[\\"ref\\",\\"identity\\"]"]]]'),
+      ['ref', 'identity']
+    )
+
+    assert.deepStrictEqual(
+      parse('["call",["ref","identity"],[["leaf","{\\"a\\":1}"]]]'),
+      { a: 1 }
+    )
+
+    assert.deepStrictEqual(
+      parse('["call",["ref","identity"],[["leaf","[\\"call\\",[\\"ref\\",\\"identity\\"],[[\\"leaf\\",\\"2\\"]]]"]]]'),
+      ['call', ['ref', 'identity'], [['leaf', '2']]]
+    )
+  })
+
   await t.test('objects and arrays', () => {
     assert.deepStrictEqual(
       run(identity({ a: identity(1), b: always(2)(), c: add(1, 2) })),
@@ -469,6 +488,18 @@ test('constructor and prototype names behave for users', async t => {
 
   await t.test('arg cannot reach module env members', () => {
     assert.strictEqual(parse(JSON.stringify(['arg', 'add'])), undefined)
+  })
+
+  await t.test('quote around leaf data', () => {
+    assert.deepStrictEqual(
+      parse('["quote",[["leaf","1"],["leaf","{\\"a\\":2}\"]]]'),
+      [1, { a: 2 }]
+    )
+
+    assert.deepStrictEqual(
+      parse('["quote",{"a":["leaf","1"],"b":{"c":["leaf","2"]}}]'),
+      { a: 1, b: { c: 2 } }
+    )
   })
 
   await t.test('ref of constructor/prototype not in the schema throws', () => {
