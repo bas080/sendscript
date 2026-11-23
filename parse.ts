@@ -46,6 +46,12 @@ const isPlainObject = (value: unknown): boolean => {
   return proto === Object.prototype || proto === null
 }
 
+const assertSafeArgName = (id: string): void => {
+  if (id === '__proto__') {
+    throw new Error('"__proto__" is a reserved arg name')
+  }
+}
+
 const spy = (type: string, fn: (...args: any[]) => any) => (...args: any[]) => {
   const value = fn(...args)
   debug(type, args, ' => ', value)
@@ -102,6 +108,10 @@ export default function Parse (
         if (operator === 'fn') {
           const [argIds, body] = [...rest]
 
+          argIds.forEach((id: string) => {
+            assertSafeArgName(id)
+          })
+
           return (...args: unknown[]) => {
             const newEnv: any = Object.create(env)
 
@@ -115,6 +125,8 @@ export default function Parse (
 
         if (operator === 'arg') {
           const [id] = rest
+
+          assertSafeArgName(id)
 
           return env[id]
         }
