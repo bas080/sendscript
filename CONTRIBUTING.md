@@ -79,8 +79,7 @@ The SENDSCRIPT.md program-format examples are runnable. SENDSCRIPT.mz is the
 source and each of its JSON code-blocks is piped as stdin into the `evalagram`
 function that evaluates the program against the vocabulary documented in the
 file. Generate the SENDSCRIPT.md from the mz source. Exporting shell functions
-for marks like `evalagram` only works when the blocks run in bash, so export the
-function and have markatzea use bash regardless of the login shell.
+for marks like `evalagram` only works when the blocks run in bash.
 
 ```bash bash
 evalagram() {
@@ -88,7 +87,7 @@ evalagram() {
 }
 export -f evalagram
 
-SHELL=$(command -v bash) markatzea ./SENDSCRIPT.mz | tee ./SENDSCRIPT.md
+markatzea ./SENDSCRIPT.mz | tee ./SENDSCRIPT.md
 
 git add ./SENDSCRIPT.md
 ```
