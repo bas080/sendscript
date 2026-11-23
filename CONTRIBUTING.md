@@ -10,6 +10,14 @@ to a separate code-block:
 markatzea ./file.mz > ./file.md
 ```
 
+The socket.io example in README.mz uses a shared port between the server and the
+client. Export it in your environment before running markatzea; the examples
+fall back to port 3000 when it is not exported:
+
+```bash
+export SENDSERVER_PORT=4211
+```
+
 The pre-push git hook.
 
 ```bash cat - > .git/hooks/pre-push
@@ -30,7 +38,7 @@ set -e
 npm ci
 npm link
 npm link sendscript
-cd ./example
+(cd ./example && npm install)
 ```
 
 Check if packages are up to date on release.
@@ -39,10 +47,10 @@ Check if packages are up to date on release.
 npm outdated && echo 'No outdated packages found'
 ```
 
-Check if no vulnerable dependencies
+Check if no vulnerable dependencies in production.
 
 ```bash bash
-npm audit
+npm audit --production
 ```
 
 Check if code type checks.
@@ -70,17 +78,17 @@ git add *.md ./example
 The SENDSCRIPT.md program-format examples are runnable. SENDSCRIPT.mz is the
 source and each of its JSON code-blocks is piped as stdin into the `evalagram`
 function that evaluates the program against the vocabulary documented in the
-file. Define and export the function so markatzea can find it.
+file. Generate the SENDSCRIPT.md from the mz source. Exporting shell functions
+for marks like `evalagram` only works when the blocks run in bash, so export the
+function and have markatzea use bash regardless of the login shell.
 
 ```bash bash
-evalagram() { node ./script/evalagram.ts }
+evalagram() {
+  node ./script/evalagram.ts
+}
 export -f evalagram
-```
 
-Generate the SENDSCRIPT.md from the mz source.
+SHELL=$(command -v bash) markatzea ./SENDSCRIPT.mz | tee ./SENDSCRIPT.md
 
-```bash bash
-markatzea ./SENDSCRIPT.mz | tee ./SENDSCRIPT.md
-
-git add ./SENDSCRIPT.mz ./SENDSCRIPT.md
+git add ./SENDSCRIPT.md
 ```
