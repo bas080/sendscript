@@ -62,13 +62,16 @@ npm run typecheck
 Check if markdown is correctly formatted.
 
 ```bash bash
-npx prettier --check --parser markdown ./README.mz ./CONTRIBUTING.md
+npx prettier --check --parser markdown ./README.mz ./CODE-ON-DEMAND.mz ./CONTRIBUTING.md
 ```
 
-Generate the README from the mz file.
+Generate the README and the code on demand chapter from the mz files. The
+CODE-ON-DEMAND.mz examples are runnable like the README examples.
 
 ```bash bash
 markatzea ./README.mz | tee ./README.md
+
+markatzea ./CODE-ON-DEMAND.mz | tee ./CODE-ON-DEMAND.md
 
 npx markdown-toc --maxdepth 3 -i README.md
 
