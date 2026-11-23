@@ -3,7 +3,7 @@ import assert from 'node:assert'
 import Stringify from './stringify.ts'
 import references from './references.ts'
 import Parse from './parse.ts'
-import { SendScriptSerializationError } from './error.ts'
+import { SendScriptReferenceError, SendScriptSerializationError } from './error.ts'
 import type { Schema } from './schema.ts'
 
 const order: string[] = []
@@ -406,5 +406,75 @@ test('forbidden/reflection access should be blocked', async t => {
   await t.test('throws when trying to get something that does not exist', () => {
     // Ensure array that contains a ref-like array stays as data if not a SendScript ref wrapper:
     assert.throws(() => run(['ref', 'doesNotExist']))
+  })
+})
+
+test('__proto__ is a reserved arg name in fn/arg', async t => {
+  function run (program: unknown) {
+    return parse(JSON.stringify(program))
+  }
+
+  await t.test('fn cannot bind a parameter named __proto__', () => {
+    assert.throws(() => run(['fn', ['__proto__'], 42]))
+  })
+
+  await t.test('fn cannot bind __proto__ when invoked through call', () => {
+    assert.throws(() => run(['call', ['fn', ['__proto__'], ['arg', 'x']], [['leaf', '"1"']]]))
+  })
+
+  await t.test('fn cannot bind __proto__ to non-object values either', () => {
+    assert.throws(() => run(['call', ['fn', ['__proto__'], 42], [1]]))
+  })
+
+  await t.test('arg cannot read __proto__', () => {
+    assert.throws(() => run(['arg', '__proto__']))
+  })
+})
+
+test('constructor and prototype names behave for users', async t => {
+  const myEnv = {
+    constructor: () => 'ctor-value',
+    prototype: () => 'proto-value',
+    add: (a: number, b: number) => a + b
+  }
+
+  const localParse = Parse(['constructor', 'prototype', 'add'], myEnv)
+
+  function run (program: unknown) {
+    return localParse(JSON.stringify(program))
+  }
+
+  await t.test('env may export functions named constructor and prototype', () => {
+    assert.strictEqual(run(['call', ['ref', 'constructor'], []]), 'ctor-value')
+    assert.strictEqual(run(['call', ['ref', 'prototype'], []]), 'proto-value')
+  })
+
+  await t.test('constructor and prototype are fine as fn parameter names', () => {
+    assert.strictEqual(
+      run(['call', ['fn', ['constructor', 'prototype'], ['arg', 'constructor']], ['a', 'b']]),
+      'a'
+    )
+    assert.strictEqual(
+      run(['call', ['fn', ['constructor', 'prototype'], ['arg', 'prototype']], ['a', 'b']]),
+      'b'
+    )
+  })
+
+  await t.test('using constructor/prototype as fn parameters pollutes nothing', () => {
+    run(['call', ['fn', ['constructor', 'prototype'], 42], ['a', 'b']])
+
+    assert.strictEqual(({} as any).prototype, undefined)
+    assert.strictEqual(({}).constructor, Object)
+  })
+
+  await t.test('arg cannot reach module env members', () => {
+    assert.strictEqual(parse(JSON.stringify(['arg', 'add'])), undefined)
+  })
+
+  await t.test('ref of constructor/prototype not in the schema throws', () => {
+    const plainParse = Parse(['add'], myEnv)
+
+    assert.throws(() => plainParse(JSON.stringify(['ref', 'constructor'])), SendScriptReferenceError)
+    assert.throws(() => plainParse(JSON.stringify(['ref', 'prototype'])), SendScriptReferenceError)
   })
 })
