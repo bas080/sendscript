@@ -8,7 +8,7 @@ import assert from 'node:assert'
 const { add, square } = references(['add', 'square'])
 const stringify = Stringify()
 
-const port = process.env.PORT || 3000
+const port = process.env.SENDSERVER_PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
 const send = (program: unknown) => {

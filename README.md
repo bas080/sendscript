@@ -44,7 +44,7 @@ Serialize and execute composable JavaScript function calls with JSON.
 - [Schema and Nested Modules](#schema-and-nested-modules)
   * [Defining a Nested Module](#defining-a-nested-module)
 - [Validation (using Zod)](#validation-using-zod)
-  * [Validating structured input](#validating-structured-input)
+  * [Type inference loop](#type-inference-loop)
 - [Leaf Serializer](#leaf-serializer)
   * [Example with superjson](#example-with-superjson)
 - [Limitations](#limitations)
@@ -52,7 +52,7 @@ Serialize and execute composable JavaScript function calls with JSON.
   * [Callbacks](#callbacks)
   * [Error handling](#error-handling)
 - [Tests](#tests)
-- [Formatting](#formatting)
+- [Type checking](#type-checking)
 - [Changelog](#changelog)
 - [License](#license)
 - [Issues](#issues)
@@ -66,6 +66,10 @@ Install SendScript from npm:
 ```bash
 npm install sendscript
 ```
+
+SendScript is published as plain TypeScript: no build step. Node 22.6 or higher
+runs `.ts` files natively. On older versions use a runner such as [tsx][tsx]:
+`npx tsx ./script.ts`.
 
 ## Quick Start
 
@@ -171,6 +175,9 @@ This package is nothing more than the absolute core of sendscript. It includes:
 - `parse` which takes the `stringify` JSON string and a real module and returns
   the result.
 
+The exact JSON representation of programs is documented in
+[SENDSCRIPT][sendscript].
+
 > **Note:** SendScript works in Node.js and browsers. The core library is
 > framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any other
 > communication method that suits your needs.
@@ -191,10 +198,14 @@ For this example we'll use [socket.io][socket.io].
 We write a simple module.
 
 ```js
-// ./example/math.ts
+/**
+ * Server-side math module with typed functions
+ * These functions will be called from the client through SendScript
+ */
 
-export const add = (a, b) => a + b
-export const square = (a) => a * a
+export const add = (a: number, b: number): number => a + b
+
+export const square = (a: number): number => a * a
 ```
 
 ### Server
@@ -206,12 +217,12 @@ Here's a socket.io server that runs SendScript programs.
 
 import { Server } from 'socket.io'
 import Parse from 'sendscript/parse.ts'
-import * as math from './math.ts'
+import * as math from './typescript/math.ts'
 
 const schema = Object.keys(math)
 const parse = Parse(schema, math)
 const server = new Server()
-const port = process.env.PORT || 3000
+const port = process.env.SENDSERVER_PORT || 3000
 
 server.on('connection', (socket) => {
   socket.on('message', async (program, callback) => {
@@ -243,12 +254,12 @@ import assert from 'node:assert'
 const { add, square } = references(['add', 'square'])
 const stringify = Stringify()
 
-const port = process.env.PORT || 3000
+const port = process.env.SENDSERVER_PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
-const send = (program) => {
+const send = (program: unknown) => {
   return new Promise((resolve, reject) => {
-    client.emit('message', stringify(program), (error, result) => {
+    client.emit('message', stringify(program), (error: any, result: unknown) => {
       error ? reject(error) : resolve(result)
     })
   })
@@ -364,13 +375,12 @@ cat ./example/typescript/math.ts
 export const add = (a: number, b: number): number => a + b
 
 export const square = (a: number): number => a * a
-
 ```
 
 ### Client-Side Type Stub
 
-Create a client-side file that mirrors your server types using the `as typeof`
-casting pattern:
+Create a client-side file that mirrors your server types by passing the module
+types to the `references` function:
 
 ```bash
 cat ./example/typescript/math.client.ts
@@ -378,22 +388,21 @@ cat ./example/typescript/math.client.ts
 ```ts
 /**
  * Client-side type-safe stubs for the math API
- * 
- * This file creates typed references that mirror the server's functions.
- * The 'as typeof mathTypes' cast gives us full TypeScript support and IDE autocomplete.
+ *
+ * Pass your server module types as a type argument to get full TypeScript
+ * support and IDE autocomplete.
  */
 
 import type * as mathTypes from './math.ts'
 import references from 'sendscript/references.ts'
 
-// Create type-safe stubs - this tells TypeScript that 'add' and 'square' 
+// Create type-safe stubs - this tells TypeScript that 'add' and 'square'
 // have the same signatures as the server functions
-export default references(['add', 'square']) as typeof mathTypes
-
+export default references<typeof mathTypes>(['add', 'square'])
 ```
 
-The `as typeof mathTypes` type assertion gives your client-side references the
-exact same types as your server module. This means:
+The type argument on `references<typeof mathTypes>` gives your client-side
+references the exact same types as your server module. This means:
 
 - Full IDE autocomplete for function names and parameters
 - Compile-time type checking - catch errors before runtime
@@ -423,21 +432,29 @@ const stringify = Stringify()
  * In this case, square(add(1, 2)) returns a number, so T is number.
  */
 async function send<T>(program: T): Promise<T> {
-  return (await fetch('/api', {
+  return (await (await fetch('/api', {
     method: 'POST',
     body: stringify(program)
-  })).json()
+  })).json()) as T
 }
 
 // TypeScript provides full autocomplete for math.add and math.square
 // It knows they take numbers and return numbers
-const result = await send(math.square(math.add(1, 2)))
+//
+// The explicit annotation documents the contract: this program's type is a
+// number because the backend math.ts module types math.square that way
+const program: number = math.square(math.add(1, 2))
+
+const result = await send(program)
 console.log(result) // 9
 
 ```
 
 TypeScript knows the exact parameter types and return types for every function
-call.
+call. The explicit annotation on the program is where the backend contract
+becomes visible: `math.square` is typed by the backend `math.ts` module, so a
+program that in truth is not a number fails to compile before anything is sent
+over the wire.
 
 ### Generating API Documentation
 
@@ -445,11 +462,7 @@ You can use [typedoc][typedoc] to automatically generate documentation from your
 TypeScript types:
 
 ```bash
-npx typedoc --plugin typedoc-plugin-markdown --out ./docs ./example/typescript/math.ts
-```
-```
-[96m[info][0m Loaded plugin typedoc-plugin-markdown
-[96m[info][0m markdown generated at ./docs
+npx typedoc --plugin typedoc-plugin-markdown --out ./docs --tsconfig ./example/typescript/tsconfig.json ./example/typescript/math.ts
 ```
 
 This generates markdown docs that can be shared with API consumers. See the
@@ -477,24 +490,14 @@ can be safely sent and executed elsewhere.
 You can define a schema as **an array of function names**
 
 ```js
-
 const schema = [
   'help',
   'version',
 
-  ['math', [
-    'add',
-    'sub'
-  ]],
-  ['vector', [
-    'add',
-    'multiply'
-  ]],
-  ['utils', [
-    'identity',
-    'always'
-  ]],
-})
+  ['math', ['add', 'sub']],
+  ['vector', ['length', 'multiply']],
+  ['utils', ['identity', 'always']],
+]
 ```
 
 Functions are referenced via their **path in the module tree**:
@@ -510,27 +513,100 @@ math.add(1, vector.length(vector.multiply([1, 2], 3)))
 SendScript focuses on program serialization and execution. For runtime input
 validation, you can use [Zod](https://zod.dev).
 
-### Validating structured input
+Program structure is already constrained by the schema tree: only declared paths
+are reachable and arguments arrive as deserialized leaf values. What remains
+unvalidated are the payload contents of those leaves. Validate them at the leaf
+boundary, inside the module function that receives them. We write a simple
+module:
 
 ```js
-const userSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string(),
-  roles: z.array(z.string()),
+import { z } from 'zod'
+
+const multiplyInput = z.object({
+  v: z.array(z.number()).min(1),
+  k: z.number(),
 })
 
-export function createUser(user) {
-  userSchema.parse(user)
+export const vector = {
+  multiply: (args) => {
+    const { v, k } = multiplyInput.parse(args)
 
-  return { success: true }
+    return v.map((x) => x * k)
+  },
+  length: (v) => Math.hypot(...v),
 }
+```
+
+One Zod schema per leaf function. When a program supplies something else, the
+`ZodError` thrown by `multiplyInput.parse` propagates as a rejection of the
+client program. We run one valid and one invalid program through the module:
+
+```js
+import Parse from 'sendscript/parse.ts'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
+import { vector } from './example/zod/vector.ts'
+
+const schema = [['vector', ['multiply', 'length']]]
+const stringify = Stringify()
+const api = references(schema)
+const parse = Parse(schema, { vector })
+
+const send = (program) => parse(stringify(program))
+
+console.log(await send(api.vector.multiply({ v: [1, 2], k: 3 })))
+
+try {
+  await send(api.vector.multiply({ v: 'not-an-array', k: 3 }))
+} catch (error) {
+  console.log(error.constructor.name)
+  console.log(JSON.stringify(error.issues[0], null, 2))
+}
+```
+```json
+[ 3, 6 ]
+ZodError
+{
+  "expected": "array",
+  "code": "invalid_type",
+  "path": [
+    "v"
+  ],
+  "message": "Invalid input: expected array, received string"
+}
+```
+
+### Type inference loop
+
+Write each Zod schema once and derive both the server signature and the client
+stub types from it:
+
+```ts
+type MultiplyArgs = z.infer<typeof multiplyInput>
+
+export const vector = {
+  multiply: (args: MultiplyArgs) => {
+    const { v, k } = multiplyInput.parse(args)
+
+    return v.map((x) => x * k)
+  },
+}
+```
+
+Because the server module is fully typed, the client reference inherits the same
+contract:
+
+```ts
+const api = references<typeof module>([['vector', ['multiply']]])
+
+api.vector.multiply({ v: [1, 2], k: 3 })
 ```
 
 **Benefits**:
 
-- Ensures arguments match expected types and shapes.
-- Throws structured errors that can be propagated to clients.
-- Works with TypeScript for automatic type inference.
+- Arguments are validated at the leaf boundary, where the payload is known.
+- `z.infer` derives both server types and client stub types from one schema.
+- Throws structured errors that propagate to clients as program rejections.
 
 ## Leaf Serializer
 
@@ -639,38 +715,47 @@ likely never be supported as JS try catch does not have a return value. It might
 make sense to wrap everything that can throw in promises which is easy to do
 with async functions.
 
+Runtime safety is enforced by parse. Refs only resolve paths declared in the
+schema and throw SendScriptReferenceError otherwise, including for empty ref
+paths. `__proto__` is reserved as an arg name and throws. Rejections that a
+program drops, for example the result of a call bound to an unused fn arg, are
+contained so they cannot crash the host process. Rejections that surface in the
+result are yours to catch.
+
 ## Tests
 
 Tests with 100% code coverage.
 
+In addition there are property based tests generated with
+[fast-check][fast-check]. `npm t` evaluates thousands of randomized programs,
+envs and schemas and asserts parse either responds or throws an allowed error.
+
 ```bash
-npm t -- -R silent
-npm t -- report text-summary
+npm t -- --test-reporter=dot --test-reporter-destination=stdout
 ```
 ```
 
 > sendscript@2.5.2 test
-> tap -R silent
+> node --test --test-reporter=dot --test-reporter-destination=stdout
 
-
-> sendscript@2.5.2 test
-> tap report text-summary
-
-
-=============================== Coverage summary ===============================
-Statements   : 100% ( 516/516 )
-Branches     : 100% ( 157/157 )
-Functions    : 100% ( 23/23 )
-Lines        : 100% ( 516/516 )
-================================================================================
+....................
+....................
+....................
+..............
 ```
 
-## Formatting
+## Type checking
 
-Standard because no config.
+TypeScript, strict mode, no emit.
 
 ```bash
-npx standard
+npm run typecheck
+```
+```
+
+> sendscript@2.5.2 typecheck
+> tsc --noEmit
+
 ```
 
 ## Changelog
@@ -691,6 +776,9 @@ See the [LICENSE.txt][license] file for details.
 See [issues][issues] for roadmap and known bugs.
 
 [license]: ./LICENSE.txt
+[tsx]: https://tsx.is/
+[sendscript]: ./SENDSCRIPT.md
+[fast-check]: https://fast-check.dev/
 [socket.io]: https://socket.io/
 [changelog]: ./CHANGELOG.md
 [auto-changelog]: https://www.npmjs.com/package/auto-changelog
