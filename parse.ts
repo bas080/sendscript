@@ -52,6 +52,16 @@ const assertSafeArgName = (id: string): void => {
   }
 }
 
+const markHandled = (value: any): any => {
+  if (value instanceof Promise || (
+    value !== null && typeof value === 'object' && typeof value.catch === 'function'
+  )) {
+    Promise.resolve(value).catch(() => {})
+  }
+
+  return value
+}
+
 const spy = (type: string, fn: (...args: any[]) => any) => (...args: any[]) => {
   const value = fn(...args)
   debug(type, args, ' => ', value)
@@ -99,10 +109,11 @@ export default function Parse (
 
         if (operator === 'then') {
           const [v, onResolve, onReject] = rest
-          return evaluate(v).then(
-            evaluate(onResolve),
-            evaluate(onReject)
-          )
+          const promise = evaluate(v)
+          const onResolveHandler = markHandled(evaluate(onResolve))
+          const onRejectHandler = markHandled(evaluate(onReject))
+
+          return promise.then(onResolveHandler, onRejectHandler)
         }
 
         if (operator === 'fn') {
@@ -116,7 +127,7 @@ export default function Parse (
             const newEnv: any = Object.create(env)
 
             argIds.forEach((id: string, index: number) => {
-              newEnv[id] = args[index]
+              newEnv[id] = markHandled(args[index])
             })
 
             return evaluateOuter(newEnv, body)
@@ -135,7 +146,7 @@ export default function Parse (
           let [fn, args] = rest
           fn = evaluate(fn)
 
-          return fn(...args.map(evaluate))
+          return fn(...args.map((arg: any) => markHandled(evaluate(arg))))
         }
 
         if (operator === 'quote') {
@@ -183,6 +194,11 @@ export default function Parse (
 
       if (operator === 'ref') {
         const path = rest
+
+        if (path.length === 0) {
+          throw new SendScriptReferenceError('Reference path cannot be empty')
+        }
+
         let current: any = env
         let schemaCurrent: any = flatSchema
 
