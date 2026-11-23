@@ -7,7 +7,7 @@ import * as math from './typescript/math.ts'
 const schema = Object.keys(math)
 const parse = Parse(schema, math)
 const server = new Server()
-const port = process.env.PORT || 3000
+const port = process.env.SENDSERVER_PORT || 3000
 
 server.on('connection', (socket) => {
   socket.on('message', async (program, callback) => {

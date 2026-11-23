@@ -180,7 +180,7 @@ import * as math from './typescript/math.ts'
 const schema = Object.keys(math)
 const parse = Parse(schema, math)
 const server = new Server()
-const port = process.env.PORT || 3000
+const port = process.env.SENDSERVER_PORT || 3000
 
 server.on('connection', (socket) => {
   socket.on('message', async (program, callback) => {
@@ -212,7 +212,7 @@ import assert from 'node:assert'
 const { add, square } = references(['add', 'square'])
 const stringify = Stringify()
 
-const port = process.env.PORT || 3000
+const port = process.env.SENDSERVER_PORT || 3000
 const client = socketClient(`http://localhost:${port}`)
 
 const send = (program: unknown) => {
@@ -241,10 +241,10 @@ Now we run this server and a client script.
 set -e
 
 # Run the server
-PORT=4211 node ./example/server.socket.io.ts&
+node ./example/server.socket.io.ts&
 
 # Run the client example
-PORT=4211 node ./example/client.socket.io.ts
+node ./example/client.socket.io.ts
 
 pkill sendscript
 ```
@@ -357,7 +357,7 @@ over the wire.
 You can use [typedoc][typedoc] to automatically generate documentation from your
 TypeScript types:
 
-```bash bash
+```bash
 npx typedoc --plugin typedoc-plugin-markdown --out ./docs --tsconfig ./example/typescript/tsconfig.json ./example/typescript/math.ts
 ```
 
@@ -412,9 +412,10 @@ validation, you can use [Zod](https://zod.dev).
 Program structure is already constrained by the schema tree: only declared paths
 are reachable and arguments arrive as deserialized leaf values. What remains
 unvalidated are the payload contents of those leaves. Validate them at the leaf
-boundary, inside the module function that receives them:
+boundary, inside the module function that receives them. We write a simple
+module:
 
-```js
+```js mkdir -p ./example/zod && cat - > ./example/zod/vector.ts
 import { z } from 'zod'
 
 const multiplyInput = z.object({
@@ -434,13 +435,28 @@ export const vector = {
 
 One Zod schema per leaf function. When a program supplies something else, the
 `ZodError` thrown by `multiplyInput.parse` propagates as a rejection of the
-client program:
+client program. We run one valid and one invalid program through the module:
 
-```js
+```js|json node --input-type=module
+import Parse from 'sendscript/parse.ts'
+import Stringify from 'sendscript/stringify.ts'
+import references from 'sendscript/references.ts'
+import { vector } from './example/zod/vector.ts'
+
+const schema = [['vector', ['multiply', 'length']]]
+const stringify = Stringify()
+const api = references(schema)
+const parse = Parse(schema, { vector })
+
+const send = (program) => parse(stringify(program))
+
+console.log(await send(api.vector.multiply({ v: [1, 2], k: 3 })))
+
 try {
-  await api.vector.multiply({ v: 'not-an-array', k: 3 })
+  await send(api.vector.multiply({ v: 'not-an-array', k: 3 }))
 } catch (error) {
-  // ZodError: Expected array, received string at path ["v"]
+  console.log(error.constructor.name)
+  console.log(JSON.stringify(error.issues[0], null, 2))
 }
 ```
 
