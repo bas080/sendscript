@@ -246,7 +246,7 @@ PORT=4211 node ./example/server.socket.io.ts&
 # Run the client example
 PORT=4211 node ./example/client.socket.io.ts
 
-pkill sendscript || true
+pkill sendscript
 ```
 
 ## Repl
