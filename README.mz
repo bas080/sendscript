@@ -31,9 +31,9 @@ Install SendScript from npm:
 npm install sendscript
 ```
 
-SendScript is published as plain TypeScript: no build step. Node 22.6 or
-higher runs `.ts` files natively. On older versions use a runner such as
-[tsx][tsx]: `npx tsx ./script.ts`.
+SendScript is published as plain TypeScript: no build step. Node 22.6 or higher
+runs `.ts` files natively. On older versions use a runner such as [tsx][tsx]:
+`npx tsx ./script.ts`.
 
 ## Quick Start
 

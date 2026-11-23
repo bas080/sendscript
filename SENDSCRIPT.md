@@ -9,8 +9,7 @@ Because a program is plain JSON, support for the format can be implemented in
 any language, both for clients (building and sending programs) and for servers
 (evaluating them). This package is the reference implementation in
 JavaScript/TypeScript; other languages only need to emit the operator nodes
-documented below on the client and reproduce the evaluation model on the
-server.
+documented below on the client and reproduce the evaluation model on the server.
 
 The evaluation model has two passes:
 
@@ -23,19 +22,19 @@ evaluated in place, property by property.
 
 ## Operators
 
-A program is any JSON value. An array whose first element is one of the
-operator keywords is interpreted as an operator node. Any other value is data.
+A program is any JSON value. An array whose first element is one of the operator
+keywords is interpreted as an operator node. Any other value is data.
 
-| Operator | Shape | Evaluates to |
-| --- | --- | --- |
-| `leaf` | `["leaf", "<json text>"]` | `JSON.parse`d text |
-| `ref` | `["ref", "`segment`", ...]` | module member at the path |
-| `call` | `["call", <callee>, [<args>]]` | called function result |
-| `fn` | `["fn", [<ids>], <body>]` | closure |
-| `arg` | `["arg", <id>]` | bound argument in scope |
-| `quote` | `["quote", <value>]` | value verbatim, not evaluated |
-| `await` | `["await", <program>]` | resolved value of program |
-| `then` | `["then", <v>, <h>, <h>?]` | chained promise |
+| Operator | Shape                          | Evaluates to                  |
+| -------- | ------------------------------ | ----------------------------- |
+| `leaf`   | `["leaf", "<json text>"]`      | `JSON.parse`d text            |
+| `ref`    | `["ref", "`segment`", ...]`    | module member at the path     |
+| `call`   | `["call", <callee>, [<args>]]` | called function result        |
+| `fn`     | `["fn", [<ids>], <body>]`      | closure                       |
+| `arg`    | `["arg", <id>]`                | bound argument in scope       |
+| `quote`  | `["quote", <value>]`           | value verbatim, not evaluated |
+| `await`  | `["await", <program>]`         | resolved value of program     |
+| `then`   | `["then", <v>, <h>, <h>?]`     | chained promise               |
 
 ### leaf
 
@@ -46,6 +45,9 @@ the `leafParse`/`leafStringify` hook.
 ```json
 ["leaf", "\"Hello\""]
 ```
+```json
+"Hello"
+```
 
 This evaluates to the string `Hello`. Other leaf texts: `["leaf", "1"]`
 evaluates to `1`, and `["leaf", "[1,2]"]` evaluates to `[1, 2]`.
@@ -53,11 +55,14 @@ evaluates to `1`, and `["leaf", "[1,2]"]` evaluates to `[1, 2]`.
 ### ref
 
 Resolves a path of segments against the server module. Segments are scalar
-values and are matched against the declared schema. Anything not declared in
-the schema throws a `SendScriptReferenceError`, and so does an empty path.
+values and are matched against the declared schema. Anything not declared in the
+schema throws a `SendScriptReferenceError`, and so does an empty path.
 
 ```json
 ["ref", "add"]
+```
+```json
+"[function]"
 ```
 
 This evaluates to the `add` function. A path with more segments reaches nested
@@ -72,6 +77,9 @@ be a JSON array of argument nodes; each argument is evaluated deeply first.
 ```json
 ["call", ["ref", "add"], [["leaf", "1"], ["leaf", "2"]]]
 ```
+```json
+3
+```
 
 This evaluates to `3`.
 
@@ -79,9 +87,9 @@ This evaluates to `3`.
 
 Creates a closure. The second element is a JSON array of argument names, the
 third element is the body, evaluated when the closure is called. Inside the
-body, `["arg", <id>]` reads a bound argument. Argument names may be any
-scalar: strings or array indexes like `0`. The scope of a body chains to the
-enclosing closure's scope.
+body, `["arg", <id>]` reads a bound argument. Argument names may be any scalar:
+strings or array indexes like `0`. The scope of a body chains to the enclosing
+closure's scope.
 
 `"__proto__"` is reserved and cannot be used as an argument name.
 
@@ -89,6 +97,9 @@ enclosing closure's scope.
 ["call",
   ["fn", [0], ["call", ["ref", "square"], [["arg", 0]]]],
   [["leaf", "3"]]]
+```
+```json
+9
 ```
 
 This evaluates to `9`.
@@ -106,6 +117,9 @@ it.
   ["call", ["ref", "resolve"], [["leaf", "1"]]],
   ["fn", [0], ["call", ["ref", "add"], [["arg", 0], ["leaf", "2"]]]]]
 ```
+```json
+3
+```
 
 This evaluates to `3`.
 
@@ -118,6 +132,9 @@ final result. Awaits may appear at any position, including as a property value.
 ```json
 ["await", ["call", ["ref", "resolve"], [["leaf", "1"]]]]
 ```
+```json
+1
+```
 
 This evaluates to `1`.
 
@@ -126,6 +143,9 @@ This evaluates to `1`.
   "slow": ["await", ["call", ["ref", "slowAdd"], [20, 22]]]
 }
 ```
+```json
+{"slow":42}
+```
 
 This evaluates to `{ "slow": 42 }`.
 
@@ -133,11 +153,14 @@ This evaluates to `{ "slow": 42 }`.
 
 Returns the value as is. It is not evaluated in the evaluation pass. Note that
 the reviver pass still runs: refs and leaves inside quoted data are resolved
-before `quote` ever sees them. To send operator-shaped *data*, use `stringify`,
+before `quote` ever sees them. To send operator-shaped _data_, use `stringify`,
 which escapes the operator keywords.
 
 ```json
 ["quote", { "tag": "plain", "nested": [1, 2] }]
+```
+```json
+{"tag":"plain","nested":[1,2]}
 ```
 
 This evaluates to `{ "tag": "plain", "nested": [1, 2] }`.
@@ -155,14 +178,17 @@ evaluated property values. This composes with all operators.
   "list": [["call", ["ref", "add"], [["leaf", "3"], ["leaf", "4"]]], "text"]
 }
 ```
+```json
+{"sum":3,"label":"total","list":[7,"text"]}
+```
 
 This evaluates to `{ "sum": 3, "label": "total", "list": [7, "text"] }`.
 
 ## Escaping
 
 The operator keywords are `leaf`, `ref`, `call`, `fn`, `arg`, `quote`, `await`
-and `then`. When hand-writing a program, a data value that would collide with
-an operator needs to be marked. `stringify` does this automatically for data:
+and `then`. When hand-writing a program, a data value that would collide with an
+operator needs to be marked. `stringify` does this automatically for data:
 strings become leaves and operator-shaped arrays get quoted.
 
 ```json
@@ -171,16 +197,19 @@ strings become leaves and operator-shaped arrays get quoted.
   "a": [["quote", "await"], []]
 }
 ```
+```json
+{"s":"call","a":["await",[]]}
+```
 
-This is what `stringify` produces for the data `{ "s": "call", "a": ["await",
-[]] }`, and it evaluates back to that same data.
+This is what `stringify` produces for the data
+`{ "s": "call", "a": ["await", []] }`, and it evaluates back to that same data.
 
 ## Error behavior
 
 Malformed forms and misuse throw catchable errors per parse call: invalid JSON
 and invalid leaf text throw `SyntaxError`, calling non-functions or malformed
-operator shapes throw `TypeError`, deep nesting throws `RangeError`, and
-invalid refs throw `SendScriptReferenceError`. Rejections that a program drops,
-for example the result of a call bound to an unused argument, are contained so
-they cannot crash the host process. Rejections that surface in the program
-result are left for the caller to catch.
+operator shapes throw `TypeError`, deep nesting throws `RangeError`, and invalid
+refs throw `SendScriptReferenceError`. Rejections that a program drops, for
+example the result of a call bound to an unused argument, are contained so they
+cannot crash the host process. Rejections that surface in the program result are
+left for the caller to catch.
