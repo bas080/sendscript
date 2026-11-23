@@ -478,3 +478,78 @@ test('constructor and prototype names behave for users', async t => {
     assert.throws(() => plainParse(JSON.stringify(['ref', 'prototype'])), SendScriptReferenceError)
   })
 })
+
+test('empty ref path leaks nothing', async t => {
+  function run (program: unknown) {
+    return parse(JSON.stringify(program))
+  }
+
+  await t.test('ref with empty path throws', () => {
+    assert.throws(() => run(['ref']), SendScriptReferenceError)
+  })
+
+  await t.test('ref with empty path throws under quote', () => {
+    assert.throws(() => run(['quote', ['ref']]), SendScriptReferenceError)
+  })
+
+  await t.test('ref with empty path throws under await', () => {
+    assert.throws(() => run(['await', ['ref']]), SendScriptReferenceError)
+  })
+})
+
+test('discarded rejected promises are contained', async t => {
+  const unhandled: unknown[] = []
+  const onUnhandled = (reason: unknown) => { unhandled.push(reason) }
+
+  const tick = () => new Promise(resolve => setTimeout(resolve, 25))
+
+  function run (program: unknown) {
+    return parse(JSON.stringify(program))
+  }
+
+  try {
+    process.on('unhandledRejection', onUnhandled)
+
+    await t.test('rejected promise bound to an unused fn param cannot kill the process', async () => {
+      const program = ['call', ['fn', ['x'], 'ok'], [['call', ['ref', 'reject'], [['leaf', '"contained-boom"']]]]]
+
+      assert.strictEqual(run(program), 'ok')
+      await tick()
+      assert.deepStrictEqual(unhandled, [])
+    })
+
+    await t.test('rejected promise discarded by a module fn cannot kill the process', async () => {
+      const program = ['call', ['ref', 'noop'], [['call', ['ref', 'reject'], [['leaf', '"contained-boom"']]]]]
+
+      assert.strictEqual(run(program), undefined)
+      await tick()
+      assert.deepStrictEqual(unhandled, [])
+    })
+
+    await t.test('rejected promise as a discarded then handler cannot kill the process', async () => {
+      const program = ['then', ['call', ['ref', 'resolve'], [['leaf', '"neg"']]], ['call', ['ref', 'reject'], [['leaf', '"contained-boom"']]]]
+
+      assert.strictEqual(await run(program), 'neg')
+      await tick()
+      assert.deepStrictEqual(unhandled, [])
+    })
+
+    await t.test('promises flowing through args still resolve normally', async () => {
+      const program = ['call', ['ref', 'identity'], [['call', ['ref', 'resolve'], [['leaf', '7']]]]]
+
+      assert.strictEqual(await run(program), 7)
+    })
+
+    await t.test('promises flowing through fn params still resolve normally', async () => {
+      const program = ['call', ['fn', ['x'], ['arg', 'x']], [['call', ['ref', 'resolve'], [['leaf', '9']]]]]
+
+      assert.strictEqual(await run(program), 9)
+    })
+
+    await t.test('rejected promise on the result path still rejects for the caller', async () => {
+      await assert.rejects(run(['call', ['ref', 'reject'], [['leaf', '"surface-boom"']]]) as Promise<unknown>)
+    })
+  } finally {
+    process.off('unhandledRejection', onUnhandled)
+  }
+})
