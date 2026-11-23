@@ -93,9 +93,11 @@ function instrument (path: string[], onAwait: OnAwait = null): Reference {
     path
   })
 
-  reference[referenceSymbol] = referenceSymbol
+  const tagged = reference as Reference
 
-  return reference
+  tagged[referenceSymbol] = referenceSymbol
+
+  return tagged
 }
 
 /**
