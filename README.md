@@ -724,7 +724,29 @@ result are yours to catch.
 
 ## Tests
 
-Tests with 100% code coverage.
+Tests with 100% code coverage on the source files, enforced with
+[thresholds][node-coverage] that fail the run when coverage drops:
+
+```bash
+COVERAGE=$(mktemp)
+npm run coverage --silent -- --test-reporter=tap > "$COVERAGE" && tail -14 "$COVERAGE" && rm "$COVERAGE"
+```
+```
+# start of coverage report
+# --------------------------------------------------------------
+# file          | line % | branch % | funcs % | uncovered lines
+# --------------------------------------------------------------
+# debug.ts      | 100.00 |   100.00 |  100.00 | 
+# error.ts      | 100.00 |   100.00 |  100.00 | 
+# parse.ts      | 100.00 |   100.00 |  100.00 | 
+# references.ts | 100.00 |   100.00 |  100.00 | 
+# stringify.ts  | 100.00 |   100.00 |  100.00 | 
+# symbol.ts     | 100.00 |   100.00 |  100.00 | 
+# --------------------------------------------------------------
+# all files     | 100.00 |   100.00 |  100.00 | 
+# --------------------------------------------------------------
+# end of coverage report
+```
 
 In addition there are property based tests generated with
 [fast-check][fast-check]. `npm t` evaluates thousands of randomized programs,
@@ -779,6 +801,7 @@ See [issues][issues] for roadmap and known bugs.
 [tsx]: https://tsx.is/
 [sendscript]: ./SENDSCRIPT.md
 [fast-check]: https://fast-check.dev/
+[node-coverage]: https://nodejs.org/api/cli.html#--test-coverage-lineslines
 [socket.io]: https://socket.io/
 [changelog]: ./CHANGELOG.md
 [auto-changelog]: https://www.npmjs.com/package/auto-changelog
