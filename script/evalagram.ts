@@ -2,8 +2,8 @@
 
 import path from 'path'
 import { pathToFileURL } from 'url'
-import Parse from './parse.ts'
-import type { Schema } from './schema.ts'
+import Parse from '../parse.ts'
+import type { Schema } from '../schema.ts'
 
 const schema: Schema = [
   'add',
