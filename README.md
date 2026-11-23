@@ -178,6 +178,11 @@ This package is nothing more than the absolute core of sendscript. It includes:
 The exact JSON representation of programs is documented in
 [SENDSCRIPT][sendscript].
 
+Programs can flow back as answers too: the server responds with a program that
+the client runs to get the final result. That style — code on demand — is worked
+out in [CODE-ON-DEMAND][code-on-demand], including error handling with
+callbacks.
+
 > **Note:** SendScript works in Node.js and browsers. The core library is
 > framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any other
 > communication method that suits your needs.
@@ -763,7 +768,7 @@ npm t -- --test-reporter=dot --test-reporter-destination=stdout
 ....................
 ....................
 ....................
-..............
+................
 ```
 
 ## Type checking
@@ -800,6 +805,7 @@ See [issues][issues] for roadmap and known bugs.
 [license]: ./LICENSE.txt
 [tsx]: https://tsx.is/
 [sendscript]: ./SENDSCRIPT.md
+[code-on-demand]: ./CODE-ON-DEMAND.md
 [fast-check]: https://fast-check.dev/
 [node-coverage]: https://nodejs.org/api/cli.html#--test-coverage-lineslines
 [socket.io]: https://socket.io/
