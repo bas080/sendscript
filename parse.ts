@@ -155,7 +155,7 @@ export default function Parse (
         }
 
         for (let i = 0; i < value.length; i++) {
-          value[i] = evaluate(value[i])
+          value[i] = markHandled(evaluate(value[i]))
         }
 
         return value
@@ -163,7 +163,7 @@ export default function Parse (
 
       if (isPlainObject(value)) {
         for (const key of Object.keys(value)) {
-          value[key] = evaluate(value[key])
+          value[key] = markHandled(evaluate(value[key]))
         }
         return value
       }
