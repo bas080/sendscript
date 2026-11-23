@@ -124,3 +124,88 @@ test('parse: any JSON payload is crash-safe (property, fast-check)', async () =>
     { numRuns: 500 }
   )
 })
+
+const envKey = fc.oneof(
+  fc.string({ minLength: 1, maxLength: 6 }),
+  fc.constantFrom('__proto__', 'constructor', 'prototype', 'fn1', 'v')
+)
+
+const arbEnvMember: fc.Arbitrary<unknown> = fc.oneof(
+  jsonLeaf,
+  fc.func(fc.jsonValue({ maxDepth: 1 })),
+  fc.constant(() => Promise.reject(new Error('env-boom'))),
+  fc.constant(async () => {
+    throw new Error('env-async-boom')
+  }),
+  fc.integer({ max: 1000 }).map(n => {
+    const promise = Promise.reject(new Error('env-boom-' + n))
+    promise.catch(() => {})
+
+    return promise
+  }),
+  fc.integer({ max: 1000 }).map(n => Promise.resolve(n)),
+  fc.constant(undefined)
+)
+
+const arbEnv: fc.Arbitrary<Record<string, unknown>> = fc
+  .array(fc.tuple(envKey, arbEnvMember), { maxLength: 4 })
+  .map(Object.fromEntries)
+
+const schemaNodeArb = (depth: number): fc.Arbitrary<unknown> => {
+  if (depth <= 0) return envKey
+
+  return fc.oneof(
+    envKey,
+    fc.tuple(envKey, fc.array(schemaNodeArb(depth - 1), { maxLength: 2 })),
+    fc.tuple(envKey, envKey)
+  )
+}
+
+const arbSchema = fc.array(schemaNodeArb(1), { maxLength: 4 })
+
+test('parse: fuzzed env/schema/payload never crash the process (property, fast-check)', async () => {
+  await fc.assert(
+    fc.asyncProperty(arbSchema, arbEnv, nodeArb(2), async (rawSchema, rawEnv, payload) => {
+      unhandledHit = false
+      unhandledReason = undefined
+
+      let threw: unknown
+      let caughtRejection: unknown
+
+      try {
+        const parse = Parse(rawSchema as Schema, rawEnv)
+        const out = parse(JSON.stringify(payload))
+
+        const timeout = new Promise<undefined>(resolve => {
+          setTimeout(() => resolve(undefined), 25).unref()
+        })
+
+        await Promise.race([
+          Promise.resolve(out).then(() => undefined, () => undefined),
+          timeout
+        ])
+      } catch (e) {
+        threw = e
+      }
+
+      await tick()
+
+      assert.ok(
+        threw === undefined || threw instanceof Error,
+        'failures must be catchable errors, got: ' + String(threw)
+      )
+      assert.ok(
+        caughtRejection === undefined || caughtRejection instanceof Error,
+        'rejections must be catchable errors, got: ' + String(caughtRejection)
+      )
+      assert.strictEqual(
+        unhandledHit,
+        false,
+        'process-killing rejection with reason: ' + String(unhandledReason)
+      )
+      assert.strictEqual(({} as any).polluted, undefined)
+      assert.strictEqual(({}).constructor, Object)
+    }),
+    { numRuns: 300 }
+  )
+})
