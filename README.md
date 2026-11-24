@@ -181,7 +181,9 @@ The exact JSON representation of programs is documented in
 Programs can flow back as answers too: the server responds with a program that
 the client runs to get the final result. That style — code on demand — is worked
 out in [CODE-ON-DEMAND][code-on-demand], including error handling with
-callbacks.
+callbacks. A program can also be evaluated as far as the environment allows and
+return the remainder — a residual program — for somewhere else to run. That
+style is worked out in [PARTIAL-EVALUATION][partial-evaluation].
 
 > **Note:** SendScript works in Node.js and browsers. The core library is
 > framework-agnostic and transport-agnostic — use HTTP, WebSockets, or any other
@@ -806,6 +808,7 @@ See [issues][issues] for roadmap and known bugs.
 [tsx]: https://tsx.is/
 [sendscript]: ./SENDSCRIPT.md
 [code-on-demand]: ./CODE-ON-DEMAND.md
+[partial-evaluation]: ./PARTIAL-EVALUATION.md
 [fast-check]: https://fast-check.dev/
 [node-coverage]: https://nodejs.org/api/cli.html#--test-coverage-lineslines
 [socket.io]: https://socket.io/
