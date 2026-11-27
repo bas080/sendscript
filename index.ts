@@ -1,4 +1,5 @@
 export { default as Parse } from './parse.ts'
+export { default as Partial } from './partial.ts'
 export { default as Stringify } from './stringify.ts'
 export { default as references } from './references.ts'
 
@@ -26,3 +27,4 @@ export type {
 } from './references.ts'
 export type { LeafParse } from './parse.ts'
 export type { LeafStringify } from './stringify.ts'
+export type { PartialResult } from './partial.ts'

@@ -1,101 +1,24 @@
 import Debug from './debug.ts'
 import { SendScriptReferenceError } from './error.ts'
 import type { Schema } from './schema.ts'
+import {
+  flattenSchema,
+  assertSafeArgName,
+  markHandled,
+  isPlainObject,
+  undefinedSentinel,
+  isLeafData,
+  leafData,
+  unwrapLeafData,
+  resolveReference,
+  defaultLeafParse,
+  type LeafParse
+} from './evaluator.ts'
 
-/**
- * Deserializer for leaf nodes. Converts serialized leaf text back into a
- * runtime value. Use a custom deserializer such as superjson to support
- * types JSON does not handle natively.
- */
-export type LeafParse = (text: string) => unknown
-
-/**
- * Default deserializer for leaf nodes.
- */
-export const defaultLeafParse: LeafParse = (text) => JSON.parse(text)
-
-function flattenSchema (schema: Schema): Record<string, any> {
-  const obj: Record<string, any> = {}
-
-  for (const item of schema) {
-    if (typeof item === 'string') {
-      obj[item] = true
-    } else if (Array.isArray(item)) {
-      const [name, children] = item
-
-      if (!Array.isArray(children)) {
-        throw new Error(`Expected children array for namespace "${name}"`)
-      }
-
-      obj[name] = flattenSchema(children)
-    } else {
-      throw new Error('Schema items must be strings or [name, children] arrays')
-    }
-  }
-
-  return obj
-}
+export type { LeafParse }
+export { defaultLeafParse }
 
 const debug = Debug.extend('parse')
-
-const undefinedSentinel: unique symbol = Symbol('sendscript-undefined')
-
-const leafSentinel: unique symbol = Symbol('sendscript-leaf-data')
-
-interface LeafData {
-  [leafSentinel]: true
-  raw: unknown
-}
-
-const leafData = (raw: unknown): LeafData => ({ [leafSentinel]: true, raw })
-
-const isLeafData = (value: unknown): value is LeafData =>
-  value !== null && typeof value === 'object' &&
-  (value as LeafData)[leafSentinel] === true
-
-const unwrapLeafData = (value: any): any => {
-  if (isLeafData(value)) return value.raw
-
-  if (Array.isArray(value)) {
-    for (let i = 0; i < value.length; i++) {
-      value[i] = unwrapLeafData(value[i])
-    }
-
-    return value
-  }
-
-  if (isPlainObject(value)) {
-    for (const key of Object.keys(value)) {
-      value[key] = unwrapLeafData(value[key])
-    }
-
-    return value
-  }
-
-  return value
-}
-
-const isPlainObject = (value: unknown): boolean => {
-  if (!value || typeof value !== 'object') return false
-  const proto = Object.getPrototypeOf(value)
-  return proto === Object.prototype || proto === null
-}
-
-const assertSafeArgName = (id: string): void => {
-  if (id === '__proto__') {
-    throw new Error('"__proto__" is a reserved arg name')
-  }
-}
-
-const markHandled = (value: any): any => {
-  if (value instanceof Promise || (
-    value !== null && typeof value === 'object' && typeof value.catch === 'function'
-  )) {
-    Promise.resolve(value).catch(() => {})
-  }
-
-  return value
-}
 
 const spy = (type: string, fn: (...args: any[]) => any) => (...args: any[]) => {
   const value = fn(...args)
@@ -231,24 +154,16 @@ export default function Parse (
 
       if (operator === 'ref') {
         const path = rest
+        const res = resolveReference(flatSchema, env, path)
 
-        if (path.length === 0) {
-          throw new SendScriptReferenceError('Reference path cannot be empty')
-        }
-
-        let current: any = env
-        let schemaCurrent: any = flatSchema
-
-        for (const segment of path) {
-          if (schemaCurrent && Object.hasOwn(schemaCurrent, segment)) {
-            current = current[segment]
-            schemaCurrent = schemaCurrent[segment]
-          } else {
-            throw new SendScriptReferenceError({ key, value } as any)
+        if (!res.found) {
+          if (res.reason === 'empty') {
+            throw new SendScriptReferenceError('Reference path cannot be empty')
           }
+          throw new SendScriptReferenceError({ key, value } as any)
         }
 
-        return markHandled(current)
+        return markHandled(res.value)
       }
 
       return value
