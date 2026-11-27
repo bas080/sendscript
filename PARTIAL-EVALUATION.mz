@@ -1,234 +1,227 @@
 # Partial Evaluation
 
-A complete evaluation runs a program from start to finish and answers with a
-value. Partial evaluation relaxes that: the program is evaluated as far as the
-current environment allows, and when evaluation reaches a call the environment
-cannot serve, it stops there. What comes back is the completed part plus a
-[residual program][partial-evaluation] — the slice of the program that still
-needs a different environment to run. In code mobility terms this is deferred
-execution: the residual program is mobile code, ready to be shipped to a node
-that has the missing implementations. The [code on demand][code-on-demand]
-chapter is the transport half of that story; this chapter is the evaluation
-half.
+> `SendScript.partial` to be implemented.
 
-## What the current API does
+## Overview
 
-The schema declares which names a program may reference; the environment
-provides their implementations. When a name is in the schema but missing from
-the environment, evaluation does not stop gracefully. The reference resolves to
-`undefined` and the failure surfaces later, from inside the call, as a
-`TypeError`:
+`SendScript.partial` evaluates a serialized SendScript program against a schema and an environment, allowing evaluation to continue even when some references cannot be resolved.
 
-```js|json node --input-type=module
-import Parse from 'sendscript/parse.ts'
-import Stringify from 'sendscript/stringify.ts'
-import references from 'sendscript/references.ts'
+Unlike `SendScript.parse`, which throws a `SendScriptReferenceError` when a reference cannot be resolved, `SendScript.partial` preserves unresolved expressions and continues evaluating independent branches.
 
-const { add, remote } = references(['add', 'remote'])
-const program = Stringify()(remote(add(1, 2)))
+The result contains:
+- A boolean indicating whether evaluation completed entirely.
+- A partially evaluated program that can be serialized and evaluated again when additional environment values become available.
 
-try {
-  Parse(['add', 'remote'], { add: (a, b) => a + b })(program)
-} catch (error) {
-  console.log(`${error.name}: ${error.message}`)
-}
-```
-
-That is the behavior this chapter builds on: evaluation genuinely does reach the
-unresolvable call — everything before it computes — but without help the stop is
-a crash, and the computed part is lost.
-
-## Frontier evaluation with a Proxy environment
-
-Fixing the stop needs no change to `Parse`. Wrap the environment in a
-[Proxy][proxy]: names the environment serves pass through untouched, names it
-does not serve become a frontier stub. `Parse` evaluates the program normally —
-computed values compute — and the first unimplemented call stops evaluation with
-its fully evaluated arguments in hand:
-
-```js mkdir -p ./example/partial && cat - > ./example/partial/frontier-env.ts
-export class MissingImplementation extends Error {
-  path: string[]
-  args: unknown[]
-
-  constructor (path: string[], args: unknown[]) {
-    super(`missing implementation: ${path.join('.')}`)
-
-    this.path = path
-    this.args = args
-  }
-}
-
-export const frontierEnv = (
-  env: Record<string, unknown>
-): Record<string, unknown> =>
-  new Proxy(env, {
-    get (target, prop) {
-      if (typeof prop !== 'string' || prop in target) return target[prop]
-
-      return (...args: unknown[]) => {
-        throw new MissingImplementation([prop], args)
-      }
-    }
-  })
-```
-
-Residualizing is serialization in reverse: rebuild the frontier call with
-`references` and `Stringify`, and the leftover becomes a program again — the
-same shape the code on demand chapter answers with:
-
-```js mkdir -p ./example/partial && cat - > ./example/partial/frontier.ts
-import Stringify from 'sendscript/stringify.ts'
-import Parse from 'sendscript/parse.ts'
-import references from 'sendscript/references.ts'
-import { frontierEnv, MissingImplementation } from './frontier-env.ts'
-
-const { add, remote } = references(['add', 'remote'])
-const local = { add: (a: number, b: number) => a + b }
-
-const program = Stringify()(remote(add(1, 2)))
-
-try {
-  Parse(['add', 'remote'], frontierEnv(local))(program)
-} catch (error) {
-  if (!(error instanceof MissingImplementation)) throw error
-
-  console.log('stopped at:', error.path.join('.'), 'args:', JSON.stringify(error.args))
-
-  const residual = Stringify()(remote(...(error.args as number[])))
-
-  console.log('residual program:', residual)
-
-  const remoteHost = Parse(['remote'], { remote: (x: number) => x * 10 })
-
-  console.log('remote completion:', remoteHost(residual))
-}
-```
-
-```bash bash
-node ./example/partial/frontier.ts
-```
-
-Two things to note. The upstream `add(1, 2)` was computed by the local
-environment and its result traveled into the frontier as an evaluated argument —
-write programs so partial results flow toward the frontier call. And evaluation
-is not transactional: side effects of sibling branches still occur before the
-stop, and results that do not flow into the frontier are dropped.
-
-## Staged fragments
-
-The second way keeps the staging explicit. A program is data already, so the
-author can hand a whole fragment to the evaluator as a value — a plain array —
-and an environment function can evaluate the fragments one at a time. Each
-fragment gets its own frontier environment; a fragment whose frontier is hit
-hands back a residual instead of a value:
-
-```js mkdir -p ./example/partial && cat - > ./example/partial/staged.ts
-import Stringify from 'sendscript/stringify.ts'
-import Parse from 'sendscript/parse.ts'
-import references from 'sendscript/references.ts'
-import { frontierEnv, MissingImplementation } from './frontier-env.ts'
-
-const { add, remote, stage: stageRef } = references(['add', 'remote', 'stage'])
-const local = { add: (a: number, b: number) => a + b }
-
-const stage = (fragment: unknown): unknown => {
-  const fragmentParse = Parse(['add', 'remote'], frontierEnv(local))
-
-  try {
-    return { status: 'done', value: fragmentParse(JSON.stringify(fragment)) }
-  } catch (error) {
-    if (!(error instanceof MissingImplementation)) throw error
-
-    const path = error.path as ('add' | 'remote')[]
-    const residual = Stringify()(references(path)[path[0]](...(error.args as number[])))
-
-    return { status: 'residual', program: residual }
-  }
-}
-
-const parse = Parse(['stage'], { stage })
-const stringify = Stringify()
-
-const result = parse(stringify([
-  stageRef(JSON.parse(stringify(add(1, 2)))),
-  stageRef(JSON.parse(stringify(remote(add(1, 2)))))
-]))
-
-console.log('staged:', JSON.stringify(result))
-
-const residual = (result as unknown as { program: string }[])[1].program
-
-const remoteHost = Parse(['remote'], { remote: (x: number) => x * 10 })
-
-console.log('remote completion:', remoteHost(residual))
-```
-
-```bash bash
-node ./example/partial/staged.ts
-```
-
-Here the outer program is a plain list of two staged calls; the same program
-language carries fragments as data. Fragments are written with the ordinary
-reflection stubs and carried as values by `JSON.parse`-ing their serialized form
-— programs stay ordinary JavaScript right up to the point they become fragment
-data.
-
-## Options for first-class support
-
-Both examples above compose exported functions only — `Parse`, `references`,
-`Stringify` — and work with the shipped, unmodified API. Making partial
-evaluation a supported feature instead of a pattern needs a decision about where
-it lives. Three options:
-
-### Option A — a partial mode on Parse
+## API
 
 ```ts
-const parse = Parse(schema, env, { partial: true })
-const result = parse(program)
-// { status: 'complete', value } |
-// { status: 'partial', pending: MissingImplementation-like nodes }
+SendScript.partial(
+  schema,
+  env,
+  leafParse,
+  leafStringify
+)(program)
 ```
 
-The evaluator learns to resolve a schema-declared but unimplemented name into a
-pending callee instead of `undefined`. A call over a pending callee does not
-invoke anything; its captured path and evaluated arguments become a pending node
-in the result, and any computation consuming a pending node becomes pending too
-— the residual taints upward. User API changes: one option flag and a structured
-result, with strict behavior preserved by default. Format changes: none; the
-residual never crosses the wire unless you serialize it.
+### Inputs
 
-### Option B — an exported frontier scaffold
+| Parameter | Type | Description |
+|---|---|---|
+| `schema` | `Schema` | Defines the references permitted in the program. |
+| `env` | `unknown` | Environment containing runtime values and functions referenced by the program. |
+| `leafParse` | `LeafParse` | Deserializes serialized leaf values into runtime values. |
+| `leafStringify` | `LeafStringify` | Serializes evaluated runtime values into leaf data. |
+| `program` | `string` | JSON-serialized SendScript program to evaluate. |
+
+### Outputs
 
 ```ts
-const { parse } = PartialEval(schema, env)
-// parse(program) -> { status, value | residual }
+interface PartialResult {
+  done: boolean
+  partial: unknown
+}
 ```
 
-Promote the Proxy frontier from userland example to an exported helper built on
-the same trick. The evaluator is untouched; the package gains one export and a
-documented result shape, and gets to own the subtleties (nested namespace
-froniers, promise rejections reaching the frontier, residual rebuilding) in a
-tested place instead of every user's README copy-paste.
+| Property | Type | Description |
+|---|---|---|
+| `done` | `boolean` | Indicates whether the entire program completed without unresolved references. |
+| `partial` | `unknown` | The evaluated result or partially evaluated program. |
 
-### Option C — a residual node in the program format
+The representation of `partial` depends on `done`:
 
-Give SENDSCRIPT a native node kind — a cell holding a program plus its missing
-names — so a partial evaluation can _return a program as its result value_ and
-programs can commute while still carrying unrun work. Programs become
-distributable processes. This is the most powerful option and the largest
-change: the format itself, both serializers, the parser, and the security story
-(what a receiving env must declare to run a cell) all need spec work.
+- **`done: true`** — All leaves have been deserialized. The result contains ordinary runtime values without `leaf` wrappers.
+- **`done: false`** — Successfully evaluated values remain serialized inside `leaf` expressions. Unresolved expressions retain their original program representation.
 
-### Comparison
+## Evaluation behavior
 
-| Option | parse.ts  | User API                     | SENDSCRIPT format | What you get                         |
-| ------ | --------- | ---------------------------- | ----------------- | ------------------------------------ |
-| A      | changes   | + option flag, + result type | unchanged         | principled partial evaluator         |
-| B      | unchanged | + one export                 | unchanged         | supported frontier pattern           |
-| C      | changes   | unchanged programs           | new node kind     | residual programs as language values |
+### Reference resolution
 
-[partial-evaluation]: https://en.wikipedia.org/wiki/Partial_evaluation
-[proxy]:
-  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy
-[code-on-demand]: ./CODE-ON-DEMAND.md
+References are resolved using the supplied schema and environment, following the same rules as `SendScript.parse`.
+
+When a reference cannot be resolved:
+- The affected expression remains unevaluated.
+- Its original expression structure is preserved.
+- Independent branches continue to be evaluated.
+- `done` becomes `false`.
+
+References that resolve to an explicitly defined `undefined` value are considered successfully resolved.
+
+### Independent branches
+
+An unresolved reference does not prevent other branches from being evaluated.
+
+For example, given:
+
+```ts
+{
+  a: ['ref', 'user', 'name'],
+  b: ['ref', 'user', 'missing'],
+  c: ['ref', 'logger', 'log']
+}
+```
+
+The result could be:
+
+```ts
+{
+  done: false,
+  partial: {
+    a: ['leaf', '"Alice"'],
+    b: ['ref', 'user', 'missing'],
+    c: ['leaf', '...']
+  }
+}
+```
+
+Evaluated branches are represented as serialized leaves while unresolved expressions retain their original representation.
+
+If all references are eventually resolved, the result instead contains ordinary runtime values:
+
+```ts
+{
+  done: true,
+  partial: {
+    a: 'Alice',
+    b: 'Bob',
+    c: logger.log
+  }
+}
+```
+
+### Asynchronous evaluation
+
+Asynchronous operations follow the same semantics as `SendScript.parse`.
+
+Independently evaluable asynchronous branches are awaited before the result is returned.
+
+Missing references encountered during asynchronous evaluation are treated as unresolved references. Other errors propagate normally.
+
+### Functions
+
+Function bodies are evaluated lazily, when their functions are called.
+
+References inside functions that have not been called do not affect `done`.
+
+### Operators
+
+Existing operator semantics are preserved, including:
+- `quote`
+- `then`
+- `await`
+- `fn`
+- `call`
+- `arg`
+
+## Resuming evaluation
+
+When `done` is `false`, the returned `partial` program can be serialized and evaluated again when additional environment values become available.
+
+For example:
+
+```ts
+const first = await SendScript.partial(
+  schema,
+  initialEnv,
+  leafParse,
+  leafStringify
+)(program)
+
+if (!first.done) {
+  const next = await SendScript.partial(
+    schema,
+    updatedEnv,
+    leafParse,
+    leafStringify
+  )(JSON.stringify(first.partial))
+}
+```
+
+Previously evaluated values are represented as serialized leaves and are restored as runtime values during subsequent evaluation.
+
+When `done` is `true`, `partial` is already the final runtime result and does not need to be serialized for further evaluation.
+
+## Error handling
+
+| Error | Behavior |
+|---|---|
+| `SendScriptReferenceError` | Preserves the affected expression and marks the result incomplete. |
+| Other evaluation errors | Propagates the error. |
+
+## Relationship with `SendScript.parse`
+
+Both APIs evaluate SendScript programs using the same language semantics.
+
+The difference is their treatment of unresolved references and their output representation.
+
+| Behavior | `parse` | `partial` |
+|---|---|---|
+| Resolve references | Yes | Yes |
+| Missing references | Throws | Preserves expression |
+| Evaluate independent branches | Normal evaluation | Continues evaluation |
+| Deserialize leaves | Yes | Yes |
+| Serialize evaluated values | No | When incomplete |
+| Await asynchronous operations | Yes | Yes |
+| Return incomplete program | No | Yes |
+| Return ordinary runtime values when complete | Yes | Yes |
+
+## `evaluator.ts`
+
+`evaluator.ts` contains the shared evaluation logic used by `Parse` and `Partial`.
+
+Its purpose is to centralize functionality common to both APIs while keeping their public interfaces and API-specific behavior separate.
+
+### Responsibilities
+
+The module should contain shared functionality such as:
+
+- Schema flattening and reference resolution.
+- Evaluation of SendScript operators.
+- Function environment and argument handling.
+- Leaf recognition and handling.
+- Promise and asynchronous evaluation utilities.
+- Common validation and safety checks.
+- Shared evaluation helpers and types.
+
+### Separation of responsibilities
+
+`Parse` and `Partial` remain separate public APIs and are responsible for their respective evaluation policies.
+
+`Parse`:
+- Throws `SendScriptReferenceError` when a reference cannot be resolved.
+- Returns the fully evaluated result.
+
+`Partial`:
+- Preserves expressions containing unresolved references.
+- Continues evaluating independent branches.
+- Serializes successfully evaluated values as leaves when the result is incomplete.
+- Returns ordinary runtime values when evaluation is complete.
+
+The evaluator should provide reusable functionality without coupling itself to either API's specific error-handling or output policy.
+
+### Design considerations
+
+- Avoid duplicating evaluation logic between `Parse` and `Partial`.
+- Keep API-specific behavior outside the shared evaluator where practical.
+- Avoid mutating the original program during evaluation.
+- Preserve existing SendScript language semantics.
+- Keep the module independent of the public `SendScript` entry point.
