@@ -127,6 +127,50 @@ test('Partial evaluation', async t => {
     })
   })
 
+  await t.test('evaluates synchronously when program has no awaits (matching Parse)', () => {
+    const partial = Partial(schema, env)
+
+    // Synchronous completed evaluation
+    const syncDone = partial(JSON.stringify({
+      name: ['ref', 'user', 'name'],
+      sum: ['call', ['ref', 'add'], [['leaf', '1'], ['leaf', '2']]]
+    }))
+
+    assert.strictEqual(syncDone instanceof Promise, false)
+    assert.strictEqual(syncDone.done, true)
+    assert.deepStrictEqual(syncDone.partial, {
+      name: 'Alice',
+      sum: 3
+    })
+
+    // Synchronous incomplete evaluation
+    const syncPartial = partial(JSON.stringify({
+      name: ['ref', 'user', 'name'],
+      missing: ['ref', 'user', 'missing']
+    }))
+
+    assert.strictEqual(syncPartial instanceof Promise, false)
+    assert.strictEqual(syncPartial.done, false)
+    assert.deepStrictEqual(syncPartial.partial, {
+      name: ['leaf', '"Alice"'],
+      missing: ['ref', 'user', 'missing']
+    })
+  })
+
+  await t.test('returns Promise when program contains await', async () => {
+    const partial = Partial(schema, env)
+
+    const asyncReturn = partial(JSON.stringify([
+      'await',
+      ['call', ['ref', 'asyncAdd'], [['leaf', '2'], ['leaf', '3']]]
+    ]))
+
+    assert.strictEqual(asyncReturn instanceof Promise, true)
+    const result = await asyncReturn
+    assert.strictEqual(result.done, true)
+    assert.strictEqual(result.partial, 5)
+  })
+
   await t.test('partially evaluates call expressions with unresolved operands', async () => {
     const partial = Partial(schema, env)
 
